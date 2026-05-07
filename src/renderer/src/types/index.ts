@@ -209,6 +209,8 @@ export interface Case {
   participants: Participant[]
   notes: Note[]
   timeline: TimelineEvent[]
+  priority?: 'normal' | 'urgent'
+  deadline?: string   // ISO date "YYYY-MM-DD"
 }
 
 export interface Settings {
@@ -225,6 +227,7 @@ export interface Settings {
   stampOffsetX?: number       // px from right edge, default 60
   stampOffsetY?: number       // px from bottom edge, default 60
   stampScale?: number         // px width/height, default 120
+  theme?: 'dark' | 'light'
 }
 
 export type View =
@@ -237,7 +240,7 @@ export type View =
   | { type: 'document-editor'; caseId: string; documentId: string }
   | { type: 'template-editor'; docType: DocumentType; from?: 'templates' | 'additional-templates' }
 
-export type WorkspaceTab = 'documents' | 'materials' | 'participants' | 'notes' | 'timeline'
+export type WorkspaceTab = 'documents' | 'materials' | 'participants' | 'notes' | 'timeline' | 'deadline'
 
 declare global {
   interface Window {

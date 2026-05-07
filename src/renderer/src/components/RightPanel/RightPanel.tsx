@@ -92,27 +92,63 @@ export default function RightPanel() {
 
     /* ── Active / Closed cases ── */
     if (view.type === 'active-cases' || view.type === 'closed-cases') {
-      const activeCount = cases.filter(c => c.status === 'active').length
-      const closedCount = cases.filter(c => c.status === 'closed').length
+      const activeCount  = cases.filter(c => c.status === 'active').length
+      const closedCount  = cases.filter(c => c.status === 'closed').length
+      const urgentCount  = cases.filter(c => c.status === 'active' && c.priority === 'urgent').length
       const lastCase = cases
         .filter(c => view.type === 'active-cases' ? c.status === 'active' : c.status === 'closed')
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
 
+      // Weekly stats
+      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
+      const weekOpened = cases.filter(c => new Date(c.createdAt) >= weekAgo).length
+      const weekClosed = cases.filter(c => c.status === 'closed' && new Date(c.updatedAt) >= weekAgo).length
+      const weekDocs   = cases.reduce((sum, c) =>
+        sum + c.documents.filter(d => new Date(d.createdAt) >= weekAgo).length, 0)
+
+      const Stat = ({ value, label, color = 'var(--t1)' }: { value: number; label: string; color?: string }) => (
+        <div style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--line-1)', borderRadius: 'var(--r3)', padding: '9px 10px' }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+          <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 3, lineHeight: 1.3 }}>{label}</div>
+        </div>
+      )
+
       return (
         <>
-          {/* stats */}
-          <div style={{ display: 'flex', gap: 7, marginBottom: 14 }}>
-            <div style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--line-1)', borderRadius: 'var(--r3)', padding: '10px 11px' }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ac2)', lineHeight: 1 }}>{activeCount}</div>
-              <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 3 }}>Активных</div>
+          {/* all-time stats */}
+          <div style={{ display: 'flex', gap: 7, marginBottom: 7 }}>
+            <Stat value={activeCount} label="Активных" color="var(--ac2)" />
+            <Stat value={closedCount} label="Закрытых" color="var(--t3)" />
+          </div>
+          {urgentCount > 0 && (
+            <div style={{ display: 'flex', gap: 7, marginBottom: 7 }}>
+              <Stat value={urgentCount} label="Срочных" color="var(--red)" />
             </div>
-            <div style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--line-1)', borderRadius: 'var(--r3)', padding: '10px 11px' }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--t3)', lineHeight: 1 }}>{closedCount}</div>
-              <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 3 }}>Закрытых</div>
+          )}
+
+          {/* weekly stats */}
+          <div style={{
+            background: 'var(--bg-2)', border: '1px solid var(--line-1)',
+            borderRadius: 'var(--r3)', padding: '10px 11px', marginBottom: 14,
+          }}>
+            <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
+              За 7 дней
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {[
+                ['Открыто дел',    weekOpened, 'var(--green)'],
+                ['Закрыто дел',    weekClosed, 'var(--t2)'],
+                ['Документов',     weekDocs,   'var(--blue)'],
+              ].map(([label, val, color]) => (
+                <div key={label as string} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, color: 'var(--t3)' }}>{label as string}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: color as string, fontFamily: 'var(--fm)' }}>{val as number}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div style={{ height: 1, background: 'var(--line-0)', marginBottom: 14 }} />
+          <div style={{ height: 1, background: 'var(--line-0)', marginBottom: 12 }} />
 
           <div className="panel-field">
             <div className="panel-field-label">Судья</div>

@@ -12,6 +12,7 @@ interface FormData {
   prosecutor: string
   lawyer: string
   description: string
+  priority: 'normal' | 'urgent'
 }
 
 export default function ActiveCases() {
@@ -21,13 +22,18 @@ export default function ActiveCases() {
   const [search, setSearch] = useState('')
   const [form, setForm] = useState<FormData>({
     caseNumber: '', title: '', plaintiff: '', defendant: '',
-    prosecutor: '', lawyer: '', description: ''
+    prosecutor: '', lawyer: '', description: '', priority: 'normal'
   })
 
   const active = cases
     .filter(c => c.status === 'active')
     .filter(c => !search || [c.caseNumber, c.title, c.plaintiff, c.defendant]
       .some(f => f.toLowerCase().includes(search.toLowerCase())))
+    .sort((a, b) => {
+      // urgent (10) > pinned (5) > normal (0)
+      const score = (c: typeof a) => (c.priority === 'urgent' ? 10 : 0) + (c.isPinned ? 5 : 0)
+      return score(b) - score(a)
+    })
 
   useEffect(() => {
     const handler = () => openNewCase()
@@ -36,7 +42,7 @@ export default function ActiveCases() {
   }, [])
 
   const openNewCase = () => {
-    setForm({ caseNumber: nextCaseNumber(), title: '', plaintiff: '', defendant: '', prosecutor: '', lawyer: '', description: '' })
+    setForm({ caseNumber: nextCaseNumber(), title: '', plaintiff: '', defendant: '', prosecutor: '', lawyer: '', description: '', priority: 'normal' })
     setShowCreate(true)
   }
 
@@ -45,7 +51,7 @@ export default function ActiveCases() {
       caseNumber: c.caseNumber, title: c.title,
       plaintiff: c.plaintiff, defendant: c.defendant,
       prosecutor: c.prosecutor || '', lawyer: c.lawyer || '',
-      description: c.description || ''
+      description: c.description || '', priority: c.priority ?? 'normal'
     })
     setEditCase(c)
   }
@@ -58,7 +64,8 @@ export default function ActiveCases() {
       plaintiff: form.plaintiff, defendant: form.defendant,
       prosecutor: form.prosecutor || undefined,
       lawyer: form.lawyer || undefined,
-      description: form.description || undefined
+      description: form.description || undefined,
+      priority: form.priority
     })
     setShowCreate(false)
     openCase(c.id)
@@ -72,7 +79,8 @@ export default function ActiveCases() {
       plaintiff: form.plaintiff, defendant: form.defendant,
       prosecutor: form.prosecutor || undefined,
       lawyer: form.lawyer || undefined,
-      description: form.description || undefined
+      description: form.description || undefined,
+      priority: form.priority
     })
     setEditCase(null)
   }
@@ -118,6 +126,29 @@ export default function ActiveCases() {
       <div className="input-group">
         <label className="input-label">Краткое описание</label>
         <textarea className="textarea" value={form.description} onChange={ff('description')} placeholder="Описание дела..." rows={3} />
+      </div>
+      <div className="input-group">
+        <label className="input-label">Приоритет</label>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {(['normal', 'urgent'] as const).map(p => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setForm(prev => ({ ...prev, priority: p }))}
+              style={{
+                padding: '6px 16px',
+                border: `1px solid ${form.priority === p ? (p === 'urgent' ? 'var(--red)' : 'var(--ac)') : 'var(--border-2)'}`,
+                borderRadius: 'var(--r-sm)',
+                background: form.priority === p ? (p === 'urgent' ? 'var(--red-dim)' : 'var(--accent-dim)') : 'transparent',
+                color: form.priority === p ? (p === 'urgent' ? 'var(--red)' : 'var(--ac2)') : 'var(--text-2)',
+                cursor: 'pointer', fontWeight: 600, fontSize: 12,
+                transition: 'all 120ms',
+              }}
+            >
+              {p === 'normal' ? '● Обычный' : '🔴 Срочный'}
+            </button>
+          ))}
+        </div>
       </div>
     </>
   )

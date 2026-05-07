@@ -46,11 +46,15 @@ const HOTKEYS = [
 
 export default function Settings() {
   const { settings, updateSettings } = useApp()
-  const [form, setForm]       = useState({ ...settings })
-  const [saved, setSaved]     = useState(false)
-  const [tab, setTab]         = useState<SettingsTab>('profile')
+  const [form, setForm]         = useState({ ...settings })
+  const [saved, setSaved]       = useState(false)
+  const [tab, setTab]           = useState<SettingsTab>('profile')
+  const [appVersion, setAppVersion] = useState('...')
 
   useEffect(() => { setForm({ ...settings }) }, [settings])
+  useEffect(() => { window.api.getAppVersion().then((v: string) => setAppVersion(v)) }, [])
+
+  const buildDate = new Date().toISOString().slice(0, 10)
 
   const ff = (key: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -163,7 +167,6 @@ export default function Settings() {
       case 'profile':
         return (
           <>
-            {/* Avatar card */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
               <div style={{ width: 56, height: 56, borderRadius: 12, background: 'linear-gradient(135deg,var(--ac-bg),var(--bg-3))', border: '1px solid var(--line-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: 'var(--ac2)', flexShrink: 0 }}>
                 {(form.judgeFirstName?.[0] || '') + (form.judgeLastName?.[0] || '') || 'СД'}
@@ -173,7 +176,7 @@ export default function Settings() {
                   {[form.judgeFirstName, form.judgeLastName].filter(Boolean).join(' ') || 'Судья'}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>
-                  {form.position || 'Должность не указана'} · Court Assistant v1.6
+                  {form.position || 'Должность не указана'} · Court Assistant v{appVersion}
                 </div>
               </div>
             </div>
@@ -194,6 +197,38 @@ export default function Settings() {
               <SectionTitle>Должность и суд</SectionTitle>
               <Field label="Должность (отображается в документах)">
                 <input className="input" value={form.position} onChange={ff('position')} placeholder="Окружной судья" />
+              </Field>
+            </SectionCard>
+
+            <SectionCard>
+              <SectionTitle>Оформление</SectionTitle>
+              <Field label="Тема интерфейса">
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {(['dark', 'light'] as const).map(t => {
+                    const active = (form.theme ?? 'dark') === t
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setForm(p => ({ ...p, theme: t }))}
+                        style={{
+                          padding: '7px 18px',
+                          border: `1px solid ${active ? 'var(--ac)' : 'var(--line-2)'}`,
+                          borderRadius: 'var(--r2)',
+                          background: active ? 'var(--ac-bg)' : 'transparent',
+                          color: active ? 'var(--ac2)' : 'var(--t3)',
+                          cursor: 'pointer', fontWeight: 600, fontSize: 12.5,
+                          transition: 'all 120ms',
+                        }}
+                      >
+                        {t === 'dark' ? '🌙 Тёмная' : '☀️ Светлая'}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 7 }}>
+                  Изменение применяется сразу после нажатия «Сохранить изменения»
+                </div>
               </Field>
             </SectionCard>
           </>
@@ -360,16 +395,16 @@ export default function Settings() {
                 </div>
                 <div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--t1)', letterSpacing: '-0.02em' }}>Court Assistant</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2, fontFamily: 'var(--fm)' }}>v1.6 · Стабильная сборка</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2, fontFamily: 'var(--fm)' }}>v{appVersion} · Стабильная сборка</div>
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
                 {[
-                  ['Разработчик',  'Prince Cursed'],
-                  ['Контакт',      'ds: saint.prince'],
-                  ['Платформа',    'Electron + React'],
-                  ['Дата сборки',  '2024-04-28'],
+                  ['Разработчик', 'Prince Cursed'],
+                  ['Контакт',     'ds: saint.prince'],
+                  ['Платформа',   'Electron + React'],
+                  ['Дата сборки', buildDate],
                 ].map(([label, val]) => (
                   <div key={label} style={{ background: 'var(--bg-3)', border: '1px solid var(--line-1)', borderRadius: 'var(--r3)', padding: '10px 13px' }}>
                     <div style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 3 }}>{label}</div>
@@ -380,14 +415,13 @@ export default function Settings() {
             </SectionCard>
 
             <SectionCard style={{ background: 'var(--bg-0)', borderColor: 'var(--line-0)' }}>
-              <SectionTitle>Что нового в v1.6</SectionTitle>
+              <SectionTitle>Что нового в v{appVersion}</SectionTitle>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
-                  ['Обновлённый дизайн — новая цветовая схема и типографика', 'var(--ac)'],
-                  ['Страница настроек с боковой навигацией по разделам', 'var(--green)'],
-                  ['Геральдика на документах: настраиваемые логотипы в шапке', 'var(--amber)'],
-                  ['Smart Fields — кликабельные плейсхолдеры с автозаполнением', 'var(--blue)'],
-                  ['История версий документа — до 20 последних сохранений', 'var(--purple)'],
+                  ['Напоминания и дедлайны по делам', 'var(--ac)'],
+                  ['Приоритеты дел — срочные дела выделяются и показываются первыми', 'var(--red)'],
+                  ['Статистика дел за неделю в боковой панели', 'var(--green)'],
+                  ['Тёмная и светлая тема с переключением в настройках', 'var(--amber)'],
                 ].map(([text, color]) => (
                   <div key={text as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: color as string, marginTop: 5, flexShrink: 0 }} />
@@ -403,7 +437,6 @@ export default function Settings() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {/* Page header */}
       <div className="page-header">
         <div>
           <div className="page-title">Настройки</div>
@@ -429,10 +462,7 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Two-column layout */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-
-        {/* Left nav */}
         <div style={{ width: 200, flexShrink: 0, background: 'var(--bg-1)', borderRight: '1px solid var(--line-1)', padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.10em', padding: '0 6px 7px' }}>
             Разделы
@@ -449,7 +479,6 @@ export default function Settings() {
           ))}
         </div>
 
-        {/* Right content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '22px 26px', background: 'var(--bg-0)' }}>
           {renderTab()}
         </div>

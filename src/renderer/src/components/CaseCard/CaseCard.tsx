@@ -35,13 +35,19 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
 
   const docCount = c.documents.length
   const matCount = c.materials.length
-  // arbitrary max for bar (show progress out of 5 docs as a visual hint)
   const barMax   = Math.max(docCount, 5)
   const barPct   = docCount === 0 ? 0 : Math.round((docCount / barMax) * 100)
 
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const deadlineDate = c.deadline
+    ? (() => { const d = new Date(c.deadline!); d.setHours(0,0,0,0); return d })()
+    : null
+  const isOverdue  = deadlineDate !== null && deadlineDate < today
+  const isDueToday = deadlineDate !== null && deadlineDate.getTime() === today.getTime()
+
   return (
     <div
-      className={`case-card${c.isPinned ? ' pinned' : ''}`}
+      className={`case-card${c.isPinned ? ' pinned' : ''}${isOverdue ? ' overdue' : isDueToday ? ' due-today' : ''}`}
       onClick={onOpen}
     >
       {/* Top row */}
@@ -50,6 +56,13 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
           <div className="case-number">
             {c.isPinned && <span style={{ marginRight: 3 }}>📌</span>}
             №{c.caseNumber}
+            {c.priority === 'urgent' && (
+              <span style={{
+                marginLeft: 6, fontSize: 9, fontWeight: 800, letterSpacing: '.06em',
+                color: '#fff', background: 'var(--red)',
+                borderRadius: 'var(--r1)', padding: '1px 5px', verticalAlign: 'middle',
+              }}>СРОЧНО</span>
+            )}
           </div>
           <div className="case-title">{c.title || `${c.plaintiff} vs ${c.defendant}`}</div>
           <div className="case-vs">{c.plaintiff} · {c.defendant}</div>
@@ -106,6 +119,16 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
               <path d="M2 8.5V2a.5.5 0 01.5-.5h5l2 2v5a.5.5 0 01-.5.5H2.5a.5.5 0 01-.5-.5z"/>
             </svg>
             {matCount}
+          </span>
+        )}
+
+        {/* Deadline badge */}
+        {deadlineDate && (
+          <span className="case-meta-item" style={{
+            color: isOverdue ? 'var(--red)' : isDueToday ? 'var(--amber)' : 'var(--t3)',
+            fontWeight: isOverdue || isDueToday ? 700 : 400,
+          }}>
+            🔔 {deadlineDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
           </span>
         )}
       </div>

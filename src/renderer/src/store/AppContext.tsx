@@ -43,6 +43,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ;(async () => {
       const s = await loadSettings()
       setSettings(s)
+      // Apply saved theme immediately
+      document.documentElement.setAttribute('data-theme', s.theme ?? 'dark')
       if (!s.storagePath) {
         const dataPath = await window.api.getDataPath()
         const defaultPath = dataPath + '/CourtAssistant'
@@ -56,6 +58,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const nums = loaded.map(c => parseInt(c.caseNumber.replace(/\D/g, '')) || 0)
       caseNumberRef.current = nums.length > 0 ? Math.max(...nums) + 1 : 1000
       setLoading(false)
+
+      // Check deadlines and fire OS notifications
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const due = loaded.filter(c => {
+        if (c.status !== 'active' || !c.deadline) return false
+        const dl = new Date(c.deadline)
+        dl.setHours(0, 0, 0, 0)
+        return dl <= today
+      })
+      if (due.length > 0 && 'Notification' in window) {
+        const fireAll = () => due.forEach(c => {
+          const dl = new Date(c.deadline!)
+          dl.setHours(0, 0, 0, 0)
+          const isToday = dl.getTime() === today.getTime()
+          new window.Notification(isToday ? '🔔 Дедлайн сегодня' : '⚠️ Дедлайн просрочен', {
+            body: `Дело №${c.caseNumber}: ${c.title || `${c.plaintiff} vs ${c.defendant}`}`
+          })
+        })
+        if (Notification.permission === 'granted') {
+          fireAll()
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(p => { if (p === 'granted') fireAll() })
+        }
+      }
     })()
   }, [])
 
@@ -168,6 +195,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateSettings = useCallback(async (patch: Partial<Settings>) => {
     const updated = { ...settings, ...patch }
     setSettings(updated)
+    if (patch.theme) {
+      document.documentElement.setAttribute('data-theme', patch.theme)
+    }
     if (patch.storagePath && patch.storagePath !== settings.storagePath) {
       resetStorageCache()
       await window.api.mkdir(patch.storagePath)

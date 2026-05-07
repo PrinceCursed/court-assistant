@@ -7,6 +7,7 @@ import Materials from './tabs/Materials'
 import Participants from './tabs/Participants'
 import Notes from './tabs/Notes'
 import Timeline from './tabs/Timeline'
+import Deadline from './tabs/Deadline'
 
 interface Props {
   caseId: string
@@ -18,7 +19,8 @@ const TABS: { id: WorkspaceTab; icon: string; label: string }[] = [
   { id: 'materials',   icon: '📎', label: 'Материалы' },
   { id: 'participants',icon: '👥', label: 'Участники' },
   { id: 'notes',       icon: '📝', label: 'Заметки' },
-  { id: 'timeline',    icon: '🕐', label: 'Хронология' }
+  { id: 'timeline',    icon: '🕐', label: 'Хронология' },
+  { id: 'deadline',    icon: '🔔', label: 'Дедлайн' },
 ]
 
 export default function CaseWorkspace({ caseId, initialTab }: Props) {
@@ -47,6 +49,7 @@ export default function CaseWorkspace({ caseId, initialTab }: Props) {
       case 'participants': return <Participants case_={c} />
       case 'notes':        return <Notes case_={c} />
       case 'timeline':     return <Timeline case_={c} />
+      case 'deadline':     return <Deadline case_={c} />
     }
   }
 

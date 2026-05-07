@@ -942,6 +942,140 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
 .editor-area mark.comment-mark { background: rgba(245,166,35,0.22); padding: 0 1px; }
 
 /* ═══════════════════════════════════════════════════════
+   CASE CARD — DEADLINE STATES
+═══════════════════════════════════════════════════════ */
+.case-card.overdue {
+  border-color: rgba(240,108,108,0.45) !important;
+  box-shadow: 0 0 0 1px rgba(240,108,108,0.18), var(--sh2);
+}
+.case-card.overdue:hover {
+  border-color: rgba(240,108,108,0.7) !important;
+}
+.case-card.due-today {
+  border-color: rgba(245,166,35,0.45) !important;
+  box-shadow: 0 0 0 1px rgba(245,166,35,0.18), var(--sh2);
+}
+.case-card.due-today:hover {
+  border-color: rgba(245,166,35,0.7) !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LIGHT THEME
+═══════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg-0:   #f2f2f5;
+  --bg-1:   #ffffff;
+  --bg-2:   #ebebf0;
+  --bg-3:   #e0e0e8;
+  --bg-4:   #d4d4de;
+
+  --bg-base:     var(--bg-0);
+  --bg-surface:  var(--bg-1);
+  --bg-elevated: var(--bg-2);
+  --bg-overlay:  var(--bg-3);
+  --bg-input:    var(--bg-1);
+
+  --line-0: rgba(0,0,0,0.05);
+  --line-1: rgba(0,0,0,0.09);
+  --line-2: rgba(0,0,0,0.14);
+  --line-3: rgba(0,0,0,0.22);
+  --line-4: rgba(0,0,0,0.32);
+
+  --border-0: var(--line-0);
+  --border-1: var(--line-1);
+  --border-2: var(--line-2);
+  --border-3: var(--line-3);
+
+  --t1: #0e0e14;
+  --t2: #38364e;
+  --t3: #78769a;
+  --t4: #b0aec8;
+
+  --text-1:   var(--t1);
+  --text-2:   var(--t2);
+  --text-3:   var(--t3);
+  --text-inv: #fff;
+
+  --sh1: 0 1px 2px rgba(0,0,0,0.08);
+  --sh2: 0 2px 8px rgba(0,0,0,0.10);
+  --sh3: 0 6px 20px rgba(0,0,0,0.12);
+  --sh4: 0 12px 40px rgba(0,0,0,0.16);
+}
+
+[data-theme="light"] html,
+[data-theme="light"] body,
+[data-theme="light"] #root {
+  background: var(--bg-0);
+  color: var(--t1);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.13);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.22);
+}
+
+[data-theme="light"] .titlebar {
+  background: rgba(242,242,245,0.90);
+}
+
+[data-theme="light"] .sidebar {
+  background: var(--bg-1);
+  border-right-color: var(--line-1);
+}
+
+[data-theme="light"] .right-panel {
+  background: var(--bg-1);
+  border-left-color: var(--line-1);
+}
+
+[data-theme="light"] .input,
+[data-theme="light"] .textarea {
+  background: var(--bg-1);
+  color: var(--t1);
+  border-color: var(--line-2);
+}
+[data-theme="light"] .input:focus,
+[data-theme="light"] .textarea:focus {
+  border-color: var(--ac);
+}
+[data-theme="light"] .input::placeholder,
+[data-theme="light"] .textarea::placeholder {
+  color: var(--t4);
+}
+
+[data-theme="light"] .btn-ghost {
+  color: var(--t2);
+}
+[data-theme="light"] .btn-ghost:hover {
+  background: var(--bg-3);
+  color: var(--t1);
+}
+
+[data-theme="light"] .modal-overlay {
+  background: rgba(200,200,210,0.6);
+}
+[data-theme="light"] .modal {
+  background: var(--bg-1);
+  border-color: var(--line-2);
+}
+
+[data-theme="light"] .ctx-menu {
+  background: var(--bg-1);
+  border-color: var(--line-2);
+}
+
+[data-theme="light"] .case-card {
+  background: var(--bg-1);
+  border-color: var(--line-1);
+}
+[data-theme="light"] .case-card:hover {
+  border-color: var(--ac-border);
+  background: var(--bg-2);
+}
+
+/* ═══════════════════════════════════════════════════════
    ANIMATIONS
 ═══════════════════════════════════════════════════════ */
 @keyframes fadeIn { from { opacity: 0; }              to { opacity: 1; } }
