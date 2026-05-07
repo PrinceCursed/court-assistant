@@ -1,0 +1,68 @@
+{
+  "name": "court-assistant",
+  "version": "1.6.0",
+  "description": "Court Assistant — professional desktop application for district judges",
+  "main": "out/main/index.js",
+  "author": "Prince Cursed",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "build:win": "electron-vite build && electron-builder --win --x64",
+    "release": "electron-vite build && electron-builder --win --x64 --publish always",
+    "preview": "electron-vite preview"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3",
+    "html2canvas": "^1.4.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  },
+  "build": {
+    "appId": "com.princecursed.courtassistant",
+    "productName": "Court Assistant",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "resources/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Court Assistant"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "PrinceCursed",
+      "repo": "court-assistant",
+      "releaseType": "release"
+    }
+  }
+}
