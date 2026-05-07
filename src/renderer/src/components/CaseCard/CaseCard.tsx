@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import ReactDOM from 'react-dom'
 import { Case } from '../../types'
 import { useApp } from '../../store/AppContext'
 
@@ -17,10 +18,12 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
   useEffect(() => {
     if (!menu) return
     const close = (e: MouseEvent) => {
+      // Only close when clicking OUTSIDE the menu portal
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenu(false)
     }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
+    // Use capture phase so the event fires before any stopPropagation inside the card
+    document.addEventListener('mousedown', close, true)
+    return () => document.removeEventListener('mousedown', close, true)
   }, [menu])
 
   const openMenu = (e: React.MouseEvent) => {
@@ -45,7 +48,7 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
   const isOverdue  = deadlineDate !== null && deadlineDate < today
   const isDueToday = deadlineDate !== null && deadlineDate.getTime() === today.getTime()
 
-  return (
+  const card = (
     <div
       className={`case-card${c.isPinned ? ' pinned' : ''}${isOverdue ? ' overdue' : isDueToday ? ' due-today' : ''}`}
       onClick={onOpen}
@@ -69,7 +72,7 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
         </div>
 
         {/* Actions — visible on hover */}
-        <div className="case-actions" onClick={e => e.stopPropagation()}>
+        <div className="case-actions" style={{ opacity: menu ? 1 : undefined }} onClick={e => e.stopPropagation()}>
           <button
             className="btn btn-icon btn-ghost btn-sm"
             onClick={openMenu}
@@ -143,62 +146,73 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
         </div>
       </div>
 
-      {/* Context menu */}
-      {menu && (
-        <div
-          ref={menuRef}
-          className="ctx-menu"
-          style={{ top: menuPos.y, left: menuPos.x - 190, position: 'fixed' }}
-          onClick={e => e.stopPropagation()}
-        >
-          <div className="ctx-item" onClick={() => { onOpen(); setMenu(false) }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-              <circle cx="6.5" cy="6.5" r="5.5"/><path d="M4 6.5l2 2 3.5-3.5"/>
-            </svg>
-            Открыть
-          </div>
-          <div className="ctx-item" onClick={() => { pinCase(c.id); setMenu(false) }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-              <path d="M3.5 1.5v4l-1.5 1h8l-1.5-1v-4"/><path d="M6.5 10.5v2"/>
-            </svg>
-            {c.isPinned ? 'Открепить' : 'Закрепить'}
-          </div>
-          <div className="ctx-item" onClick={() => { onEdit(); setMenu(false) }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-              <path d="M2 10l1-3 6.5-6.5 2.5 2.5L5.5 9.5l-3 .5z"/>
-            </svg>
-            Редактировать
-          </div>
-          <div className="ctx-item" onClick={async () => {
-            const d = await duplicateCase(c.id)
-            setView({ type: 'case-workspace', caseId: d.id })
-            setMenu(false)
-          }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-              <rect x="1.5" y="1.5" width="8.5" height="8.5" rx="1.5"/>
-              <rect x="3" y="3" width="8.5" height="8.5" rx="1.5" fill="var(--bg-2)"/>
-            </svg>
-            Дублировать
-          </div>
-          <div className="ctx-divider" />
-          {c.status === 'active' && (
-            <div className="ctx-item" onClick={() => { closeCase(c.id); setMenu(false) }}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-                <circle cx="6.5" cy="6.5" r="5.5"/><path d="M4 6.5l2 2 3.5-3.5"/>
-              </svg>
-              Закрыть дело
-            </div>
-          )}
-          <div className="ctx-item danger" onClick={() => {
-            if (window.confirm(`Удалить дело №${c.caseNumber}?`)) { deleteCase(c.id); setMenu(false) }
-          }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-              <path d="M2 4h9M5 4V2.5h3V4M4.5 4.5l.5 6h3l.5-6"/>
-            </svg>
-            Удалить
-          </div>
+    </div>
+  )  // end const card
+
+  // Render context menu via portal so it floats above ALL other content
+  const contextMenu = menu ? ReactDOM.createPortal(
+    <div
+      ref={menuRef}
+      className="ctx-menu"
+      style={{ position: 'fixed', top: menuPos.y, left: menuPos.x - 190, zIndex: 99999 }}
+      // Stop propagation so the capture-phase mousedown listener on document
+      // does NOT fire when clicking items inside the menu itself
+      onMouseDown={e => e.stopPropagation()}
+    >
+      <div className="ctx-item" onClick={() => { onOpen(); setMenu(false) }}>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <circle cx="6.5" cy="6.5" r="5.5"/><path d="M4 6.5l2 2 3.5-3.5"/>
+        </svg>
+        Открыть
+      </div>
+      <div className="ctx-item" onClick={() => { pinCase(c.id); setMenu(false) }}>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <path d="M3.5 1.5v4l-1.5 1h8l-1.5-1v-4"/><path d="M6.5 10.5v2"/>
+        </svg>
+        {c.isPinned ? 'Открепить' : 'Закрепить'}
+      </div>
+      <div className="ctx-item" onClick={() => { onEdit(); setMenu(false) }}>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <path d="M2 10l1-3 6.5-6.5 2.5 2.5L5.5 9.5l-3 .5z"/>
+        </svg>
+        Редактировать
+      </div>
+      <div className="ctx-item" onClick={async () => {
+        const d = await duplicateCase(c.id)
+        setView({ type: 'case-workspace', caseId: d.id })
+        setMenu(false)
+      }}>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <rect x="1.5" y="1.5" width="8.5" height="8.5" rx="1.5"/>
+          <rect x="3" y="3" width="8.5" height="8.5" rx="1.5" fill="var(--bg-2)"/>
+        </svg>
+        Дублировать
+      </div>
+      <div className="ctx-divider" />
+      {c.status === 'active' && (
+        <div className="ctx-item" onClick={() => { closeCase(c.id); setMenu(false) }}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+            <circle cx="6.5" cy="6.5" r="5.5"/><path d="M4 6.5l2 2 3.5-3.5"/>
+          </svg>
+          Закрыть дело
         </div>
       )}
-    </div>
+      <div className="ctx-item danger" onClick={() => {
+        if (window.confirm(`Удалить дело №${c.caseNumber}?`)) { deleteCase(c.id); setMenu(false) }
+      }}>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <path d="M2 4h9M5 4V2.5h3V4M4.5 4.5l.5 6h3l.5-6"/>
+        </svg>
+        Удалить
+      </div>
+    </div>,
+    document.body
+  ) : null
+
+  return (
+    <>
+      {card}
+      {contextMenu}
+    </>
   )
 }
