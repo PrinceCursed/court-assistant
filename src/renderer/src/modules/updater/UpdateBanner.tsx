@@ -1,13 +1,14 @@
 /**
- * UpdateBanner — floating auto-update notification.
+ * UpdateBanner — floating auto-update notification (App Store style).
  *
  * Lifecycle:
  *   idle → checking → not-available (hides)
- *                  → available   → downloading → ready
- *                  → error       (shows briefly, then hides)
+ *                  → available → downloading (auto, no user action needed)
+ *                             → ready  (shows "Restart to update")
+ *                  → error (shows briefly, then hides)
  *
- * The banner renders as a small card in the bottom-right corner.
- * It is invisible until an update is found (or an error occurs).
+ * The banner is invisible until download is ready or an error occurs.
+ * There is NO "Download" button — downloads start automatically in the background.
  */
 
 import React, { useEffect, useRef, useState } from 'react'
@@ -28,7 +29,7 @@ interface UpdateStatus {
   data?: {
     version?: string
     notes?: string
-    message?: string   // error message
+    message?: string
   }
 }
 
@@ -36,7 +37,7 @@ interface DownloadProgress {
   percent: number
   transferred: number
   total: number
-  speed: number       // bytes/s
+  speed: number
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -53,37 +54,34 @@ export default function UpdateBanner() {
   const [status, setStatus]     = useState<UpdateStatus>({ state: 'idle' })
   const [progress, setProgress] = useState<DownloadProgress | null>(null)
   const [visible, setVisible]   = useState(false)
-  const [version, setVersion]   = useState<string>('')
-
-  // Dismiss hides the banner but does NOT cancel any ongoing download
   const [dismissed, setDismissed] = useState(false)
+  const [version, setVersion]   = useState<string>('')
 
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Fetch the current app version once on mount
   useEffect(() => {
     window.api.getAppVersion().then((v: string) => setVersion(v))
   }, [])
 
-  // Subscribe to updater events from the main process
   useEffect(() => {
     window.api.onUpdateStatus((payload: { state: string; data?: unknown }) => {
       const s = payload as UpdateStatus
       setStatus(s)
 
       if (s.state === 'available') {
+        // Download starts automatically — show a subtle banner with spinner
         setDismissed(false)
         setVisible(true)
       }
 
       if (s.state === 'ready') {
+        // Download complete — show "Restart to update"
         setDismissed(false)
         setVisible(true)
         setProgress(null)
       }
 
       if (s.state === 'error') {
-        // Show error briefly then hide
         setVisible(true)
         if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
         errorTimerRef.current = setTimeout(() => setVisible(false), 6000)
@@ -94,6 +92,7 @@ export default function UpdateBanner() {
       }
 
       if (s.state === 'downloading') {
+        setDismissed(false)
         setVisible(true)
       }
     })
@@ -110,19 +109,10 @@ export default function UpdateBanner() {
     }
   }, [])
 
-  // Nothing to show
   if (!visible || dismissed) return null
 
   const { state, data } = status
   const newVersion = data?.version ?? ''
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-
-  const handleDownload = async () => {
-    setStatus({ state: 'downloading' })
-    setProgress({ percent: 0, transferred: 0, total: 0, speed: 0 })
-    await window.api.downloadUpdate()
-  }
 
   const handleInstall = () => {
     window.api.installUpdate()
@@ -132,6 +122,21 @@ export default function UpdateBanner() {
     setStatus({ state: 'checking' })
     await window.api.checkUpdate()
   }
+
+  // ── Dot color ─────────────────────────────────────────────────────────────
+
+  const dotColor =
+    state === 'available'   ? '#7c72f5' :
+    state === 'downloading' ? '#5b9cf6' :
+    state === 'ready'       ? '#3ecf8e' :
+    state === 'error'       ? '#f06c6c' :
+    state === 'checking'    ? '#f5a623' : '#6a6682'
+
+  const dotGlow =
+    state === 'available'   ? '0 0 6px #7c72f5' :
+    state === 'downloading' ? '0 0 6px #5b9cf6' :
+    state === 'ready'       ? '0 0 6px #3ecf8e' :
+    state === 'error'       ? '0 0 6px #f06c6c' : 'none'
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -157,21 +162,10 @@ export default function UpdateBanner() {
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Coloured dot indicating state */}
           <div style={{
             width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-            background:
-              state === 'available'    ? '#7c72f5' :
-              state === 'downloading'  ? '#5b9cf6' :
-              state === 'ready'        ? '#3ecf8e' :
-              state === 'error'        ? '#f06c6c' :
-              state === 'checking'     ? '#f5a623' :
-              '#6a6682',
-            boxShadow:
-              state === 'available'   ? '0 0 6px #7c72f5' :
-              state === 'downloading' ? '0 0 6px #5b9cf6' :
-              state === 'ready'       ? '0 0 6px #3ecf8e' :
-              state === 'error'       ? '0 0 6px #f06c6c' : 'none',
+            background: dotColor,
+            boxShadow: dotGlow,
           }} />
           <span style={{ fontWeight: 700, color: '#f2f0fb', letterSpacing: '-0.01em' }}>
             Court Assistant
@@ -185,7 +179,7 @@ export default function UpdateBanner() {
           </span>
         </div>
 
-        {/* Dismiss button (not shown while downloading) */}
+        {/* Dismiss — hidden during active download */}
         {state !== 'downloading' && (
           <button
             onClick={() => setDismissed(true)}
@@ -203,56 +197,22 @@ export default function UpdateBanner() {
         )}
       </div>
 
-      {/* Body — depends on state */}
-
+      {/* ── available: download started automatically ── */}
       {state === 'available' && (
-        <>
-          <div style={{ color: '#a8a4c0', marginBottom: 12, lineHeight: 1.5 }}>
-            Доступна новая версия{' '}
-            <span style={{ color: '#9d95f8', fontWeight: 600 }}>v{newVersion}</span>
-          </div>
-          <div style={{ display: 'flex', gap: 7 }}>
-            <button
-              onClick={handleDownload}
-              style={{
-                flex: 1, padding: '6px 0',
-                background: '#7c72f5', color: '#fff',
-                border: 'none', borderRadius: 8, cursor: 'pointer',
-                fontWeight: 600, fontSize: 11.5,
-                boxShadow: '0 1px 3px rgba(124,114,245,0.4)',
-                transition: 'all 80ms',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#9d95f8')}
-              onMouseLeave={e => (e.currentTarget.style.background = '#7c72f5')}
-            >
-              ↓ Скачать обновление
-            </button>
-            <button
-              onClick={() => setDismissed(true)}
-              style={{
-                padding: '6px 11px',
-                background: 'rgba(255,255,255,0.04)',
-                color: '#6a6682', border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: 8, cursor: 'pointer',
-                fontWeight: 500, fontSize: 11.5,
-                transition: 'all 80ms',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#a8a4c0')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#6a6682')}
-            >
-              Позже
-            </button>
-          </div>
-        </>
+        <div style={{ color: '#a8a4c0', lineHeight: 1.5 }}>
+          Найдена версия{' '}
+          <span style={{ color: '#9d95f8', fontWeight: 600 }}>v{newVersion}</span>
+          {' '}— загрузка начата...
+        </div>
       )}
 
+      {/* ── downloading ── */}
       {state === 'downloading' && progress && (
         <>
           <div style={{ color: '#a8a4c0', marginBottom: 8, lineHeight: 1.5 }}>
-            Загрузка обновления...{' '}
+            Загрузка обновления{newVersion ? ` v${newVersion}` : ''}…{' '}
             <span style={{ color: '#5b9cf6', fontWeight: 600 }}>{progress.percent}%</span>
           </div>
-          {/* Progress bar */}
           <div style={{
             height: 4, background: 'rgba(255,255,255,0.07)',
             borderRadius: 4, overflow: 'hidden', marginBottom: 7,
@@ -265,7 +225,6 @@ export default function UpdateBanner() {
               transition: 'width 300ms ease',
             }} />
           </div>
-          {/* Size / speed */}
           <div style={{ color: '#3d3a52', fontSize: 10.5, fontFamily: "'Geist Mono', monospace" }}>
             {formatBytes(progress.transferred)} / {formatBytes(progress.total)}
             {progress.speed > 0 && (
@@ -279,12 +238,13 @@ export default function UpdateBanner() {
         <div style={{ color: '#6a6682' }}>Подготовка к загрузке...</div>
       )}
 
+      {/* ── ready: only action is "Restart" ── */}
       {state === 'ready' && (
         <>
           <div style={{ color: '#a8a4c0', marginBottom: 12, lineHeight: 1.5 }}>
             Версия{' '}
             <span style={{ color: '#3ecf8e', fontWeight: 600 }}>v{newVersion}</span>
-            {' '}загружена и готова к установке.
+            {' '}готова. Перезапустите, чтобы применить.
           </div>
           <button
             onClick={handleInstall}
@@ -299,15 +259,20 @@ export default function UpdateBanner() {
             onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.12)')}
             onMouseLeave={e => (e.currentTarget.style.filter = '')}
           >
-            ↺ Перезапустить и установить
+            ↺ Перезапустить и обновить
           </button>
+          <div style={{ marginTop: 7, color: '#3d3a52', fontSize: 10.5, textAlign: 'center' }}>
+            Или установится автоматически при закрытии
+          </div>
         </>
       )}
 
+      {/* ── checking ── */}
       {state === 'checking' && (
         <div style={{ color: '#6a6682' }}>Проверка обновлений...</div>
       )}
 
+      {/* ── error ── */}
       {state === 'error' && (
         <>
           <div style={{ color: '#f06c6c', marginBottom: 10, lineHeight: 1.5, fontSize: 11.5 }}>

@@ -82,7 +82,7 @@ function Titlebar() {
           background: 'var(--bg-3)', border: '1px solid var(--line-1)',
           borderRadius: 9999, padding: '1px 6px', fontFamily: 'var(--fm)',
           marginLeft: 2,
-        }}>v1.9</span>
+        }}>v1.9.1</span>
       </div>
 
       {/* Breadcrumb center */}

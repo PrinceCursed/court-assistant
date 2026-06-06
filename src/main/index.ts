@@ -20,8 +20,8 @@ const isDev = process.env.NODE_ENV === 'development'
  *   ready → (quitAndInstall on user click)
  */
 function setupAutoUpdater(win: BrowserWindow): void {
-  // Do NOT download automatically — wait for explicit user action
-  autoUpdater.autoDownload = false
+  // Download automatically in the background — App Store style
+  autoUpdater.autoDownload = true
   // Install on next quit if the user dismissed the "restart now" dialog
   autoUpdater.autoInstallOnAppQuit = true
   // Suppress the built-in dialog; we show our own UI

@@ -1,6 +1,6 @@
 {
   "name": "court-assistant",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "Court Assistant — professional desktop application for district judges",
   "main": "out/main/index.js",
   "author": "Prince Cursed",
@@ -52,8 +52,8 @@
       ]
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
+      "oneClick": true,
+      "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Court Assistant"
