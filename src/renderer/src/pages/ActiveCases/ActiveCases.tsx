@@ -42,11 +42,13 @@ export default function ActiveCases() {
   }, [])
 
   const openNewCase = () => {
+    setEditCase(null)
     setForm({ caseNumber: nextCaseNumber(), title: '', plaintiff: '', defendant: '', prosecutor: '', lawyer: '', description: '', priority: 'normal' })
     setShowCreate(true)
   }
 
   const openEdit = (c: Case) => {
+    setShowCreate(false)
     setForm({
       caseNumber: c.caseNumber, title: c.title,
       plaintiff: c.plaintiff, defendant: c.defendant,

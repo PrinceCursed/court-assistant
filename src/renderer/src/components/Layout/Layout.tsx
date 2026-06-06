@@ -96,6 +96,11 @@ function Titlebar() {
       {/* macOS-style window controls */}
       <div className="titlebar-controls">
         <button
+          className="titlebar-btn close"
+          onClick={() => window.api.closeWindow()}
+          title="Закрыть"
+        />
+        <button
           className="titlebar-btn min"
           onClick={() => window.api.minimizeWindow()}
           title="Свернуть"
@@ -104,11 +109,6 @@ function Titlebar() {
           className="titlebar-btn max"
           onClick={() => window.api.maximizeWindow()}
           title="Развернуть"
-        />
-        <button
-          className="titlebar-btn close"
-          onClick={() => window.api.closeWindow()}
-          title="Закрыть"
         />
       </div>
     </div>

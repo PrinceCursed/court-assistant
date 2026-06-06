@@ -446,7 +446,11 @@ export default function Settings() {
           <button
             className="btn btn-ghost btn-sm"
             style={{ color: 'var(--red)' }}
-            onClick={() => { if (window.confirm('Сбросить настройки?')) {} }}
+            onClick={() => {
+              if (window.confirm('Сбросить настройки профиля к значениям по умолчанию?')) {
+                setForm(p => ({ ...p, judgeFirstName: '', judgeLastName: '', position: 'Окружной судья', stampBase64: undefined, heraldryDeterminationBase64: undefined, heraldryOrderBase64: undefined }))
+              }
+            }}
           >
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
               <path d="M9.5 2A5 5 0 112 7M9.5 2v3h-3"/>

@@ -265,6 +265,14 @@ declare global {
       getDataPath: () => Promise<string>
       openExternal: (url: string) => Promise<void>
       openFile: (path: string) => Promise<void>
+      // Auto-updater
+      getAppVersion: () => Promise<string>
+      checkUpdate: () => Promise<{ ok?: boolean; error?: string }>
+      downloadUpdate: () => Promise<void>
+      installUpdate: () => void
+      onUpdateStatus: (cb: (payload: { state: string; data?: unknown }) => void) => void
+      onUpdateProgress: (cb: (payload: { percent: number; transferred: number; total: number; speed: number }) => void) => void
+      removeUpdateListeners: () => void
     }
   }
 }

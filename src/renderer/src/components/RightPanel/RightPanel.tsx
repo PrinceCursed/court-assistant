@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useApp } from '../../store/AppContext'
 
 export default function RightPanel() {
   const { view, cases, settings } = useApp()
+  const [appVersion, setAppVersion] = useState('')
+  useEffect(() => { window.api.getAppVersion().then(setAppVersion).catch(() => {}) }, [])
 
   const judgeName =
     settings.judgeFirstName || settings.judgeLastName
@@ -195,10 +197,12 @@ export default function RightPanel() {
             </div>
           )}
           <div style={{ height: 1, background: 'var(--line-0)', margin: '10px 0' }} />
-          <div className="panel-field">
-            <div className="panel-field-label">Версия</div>
-            <div className="panel-field-value" style={{ fontFamily: 'var(--fm)', fontSize: 11.5, color: 'var(--t3)' }}>v1.6</div>
-          </div>
+          {appVersion && (
+            <div className="panel-field">
+              <div className="panel-field-label">Версия</div>
+              <div className="panel-field-value" style={{ fontFamily: 'var(--fm)', fontSize: 11.5, color: 'var(--t3)' }}>v{appVersion}</div>
+            </div>
+          )}
         </>
       )
     }

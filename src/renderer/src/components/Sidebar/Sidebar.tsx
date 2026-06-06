@@ -33,7 +33,7 @@ const GROUPS = [
 ]
 
 export default function Sidebar() {
-  const { view, setView, cases } = useApp()
+  const { view, setView, cases, settings } = useApp()
 
   const currentSection = (view.type === 'case-workspace' || view.type === 'document-editor')
     ? 'active-cases'
@@ -73,10 +73,14 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div className="sidebar-footer-avatar">PC</div>
+          <div className="sidebar-footer-avatar">
+            {((settings.judgeFirstName?.[0] || '') + (settings.judgeLastName?.[0] || '')) || 'СД'}
+          </div>
           <div>
-            <div className="sidebar-footer-name">Prince Cursed</div>
-            <div className="sidebar-footer-role">Окружной судья</div>
+            <div className="sidebar-footer-name">
+              {[settings.judgeFirstName, settings.judgeLastName].filter(Boolean).join(' ') || 'Судья'}
+            </div>
+            <div className="sidebar-footer-role">{settings.position || 'Должность не указана'}</div>
           </div>
         </div>
       </div>

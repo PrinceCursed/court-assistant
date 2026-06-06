@@ -27,12 +27,6 @@ export default function CaseWorkspace({ caseId, initialTab }: Props) {
   const { cases, setView, closeCase } = useApp()
   const [tab, setTab] = useState<WorkspaceTab>(initialTab || 'documents')
   const [showClose, setShowClose] = useState(false)
-  const [closeOpts, setCloseOpts] = useState({
-    moveToArchive: true,
-    keepDocuments: true,
-    keepMaterials: true,
-    makeReadonly: true
-  })
 
   const c = cases.find(x => x.id === caseId)
   if (!c) return <div className="empty-state"><div className="empty-state-text">Дело не найдено</div></div>
@@ -97,6 +91,7 @@ export default function CaseWorkspace({ caseId, initialTab }: Props) {
         <Modal
           title="Закрыть дело"
           onClose={() => setShowClose(false)}
+          width={400}
           footer={
             <>
               <button className="btn btn-ghost" onClick={() => setShowClose(false)}>Отмена</button>
@@ -104,25 +99,9 @@ export default function CaseWorkspace({ caseId, initialTab }: Props) {
             </>
           }
         >
-          <div style={{ marginBottom: 16, fontSize: 13, color: 'var(--text-2)' }}>
-            Дело №{c.caseNumber} будет перемещено в архив.
-          </div>
-          <div className="close-check">
-            {([
-              ['moveToArchive', 'Переместить в закрытые дела'],
-              ['keepDocuments', 'Сохранить все документы'],
-              ['keepMaterials', 'Сохранить все материалы'],
-              ['makeReadonly',  'Сделать дело только для чтения']
-            ] as [keyof typeof closeOpts, string][]).map(([key, label]) => (
-              <label key={key} className="close-check-item">
-                <input
-                  type="checkbox"
-                  checked={closeOpts[key]}
-                  onChange={e => setCloseOpts(p => ({ ...p, [key]: e.target.checked }))}
-                />
-                <span className="close-check-label">{label}</span>
-              </label>
-            ))}
+          <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
+            Дело <strong style={{ color: 'var(--t1)' }}>№{c.caseNumber}</strong> будет перемещено в архив закрытых дел.
+            Все документы и материалы сохранятся.
           </div>
         </Modal>
       )}
