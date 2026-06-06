@@ -74,6 +74,12 @@ export default function DocumentEditor({ case_: c, document: doc, onSave, onSave
   }
   const [activeField, setActiveField] = useState<ActiveField | null>(null)
 
+  // Font / color toolbar state
+  const [textColor, setTextColor] = useState('#f2f0fb')
+  const [hlColor, setHlColor]     = useState('transparent')
+  const colorInputRef = useRef<HTMLInputElement>(null)
+  const hlInputRef    = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     if (editorRef.current) {
       editorRef.current.innerHTML = doc.content
@@ -299,6 +305,92 @@ export default function DocumentEditor({ case_: c, document: doc, onSave, onSave
     handleChange()
   }
 
+  // ── Paste: strip external inline styles/fonts to prevent font-bleed ─────────
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const html = e.clipboardData.getData('text/html')
+    const text = e.clipboardData.getData('text/plain')
+
+    if (html) {
+      const tmp = document.createElement('div')
+      tmp.innerHTML = html
+
+      // Strip all presentational attributes from every element
+      const cleanEl = (el: Element) => {
+        ;['style','class','id','lang','dir','color','face','size',
+          'bgcolor','background','valign','align','width','height'].forEach(a => el.removeAttribute(a))
+        Array.from(el.children).forEach(child => cleanEl(child as Element))
+      }
+      cleanEl(tmp)
+
+      // Unwrap <font> and bare <span> elements (they carry no semantic meaning)
+      tmp.querySelectorAll('font, span').forEach(el => {
+        const parent = el.parentNode
+        if (!parent) return
+        while (el.firstChild) parent.insertBefore(el.firstChild, el)
+        parent.removeChild(el)
+      })
+
+      // Remove MS-Office meta / comment nodes
+      tmp.querySelectorAll('o\\:p, w\\:sdt, [class^="Mso"]').forEach(el => el.remove())
+
+      document.execCommand('insertHTML', false, tmp.innerHTML)
+    } else if (text) {
+      // Plain text: preserve paragraph breaks
+      const paras = text.split(/\n{2,}/)
+      if (paras.length > 1) {
+        const escaped = paras
+          .map(p => `<p>${p.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</p>`)
+          .join('')
+        document.execCommand('insertHTML', false, escaped)
+      } else {
+        document.execCommand('insertText', false, text)
+      }
+    }
+    handleChange()
+  }, [handleChange])
+
+  // ── Font / size / color helpers ──────────────────────────────────────────────
+  const applyFontFamily = useCallback((family: string) => {
+    editorRef.current?.focus()
+    document.execCommand('fontName', false, family)
+    handleChange()
+  }, [handleChange])
+
+  const applyFontSize = useCallback((px: string) => {
+    editorRef.current?.focus()
+    // execCommand('fontSize') only takes 1-7; use the font-7 trick to get spans
+    document.execCommand('fontSize', false, '7')
+    editorRef.current?.querySelectorAll('font[size="7"]').forEach(font => {
+      const span = document.createElement('span')
+      span.style.fontSize = px
+      const p = font.parentNode
+      if (!p) return
+      p.insertBefore(span, font)
+      while (font.firstChild) span.appendChild(font.firstChild)
+      p.removeChild(font)
+    })
+    handleChange()
+  }, [handleChange])
+
+  const applyTextColor = useCallback((color: string) => {
+    editorRef.current?.focus()
+    document.execCommand('foreColor', false, color)
+    handleChange()
+  }, [handleChange])
+
+  const applyHilight = useCallback((color: string) => {
+    editorRef.current?.focus()
+    document.execCommand('hiliteColor', false, color)
+    handleChange()
+  }, [handleChange])
+
+  const clearFormatting = useCallback(() => {
+    editorRef.current?.focus()
+    document.execCommand('removeFormat', false)
+    handleChange()
+  }, [handleChange])
+
   const align = (dir: Align) => exec(`justify${dir}`)
 
   const insertSection = (name: string) => {
@@ -428,6 +520,7 @@ export default function DocumentEditor({ case_: c, document: doc, onSave, onSave
       if (e.key === 's' && !e.shiftKey) { e.preventDefault(); handleSave() }
       if (e.key === 'p') { e.preventDefault(); document.dispatchEvent(new CustomEvent('do-export-jpeg')) }
       if (e.key === 'C' && e.shiftKey) { e.preventDefault(); copyBBCode() }
+      if (e.key === '\\') { e.preventDefault(); clearFormatting() }
     }
   }
 
@@ -483,6 +576,79 @@ export default function DocumentEditor({ case_: c, document: doc, onSave, onSave
       {/* Editor pane */}
       <div className="editor-pane" style={{ position: 'relative' }}>
         <div className="toolbar">
+          {/* ── Строка 1: шрифт, размер, цвет ── */}
+
+          {/* Шрифт */}
+          <select className="toolbar-select" style={{ width: 130, flexShrink: 0 }} defaultValue=""
+            onChange={e => { if (e.target.value) { applyFontFamily(e.target.value); e.target.value = '' } }}>
+            <option value="" disabled>Шрифт</option>
+            <option value="Geist, -apple-system, sans-serif">Geist (стандарт)</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="Verdana, sans-serif">Verdana</option>
+            <option value="'Courier New', monospace">Courier New</option>
+          </select>
+
+          {/* Размер */}
+          <select className="toolbar-select" style={{ width: 58, flexShrink: 0 }} defaultValue=""
+            onChange={e => { if (e.target.value) { applyFontSize(e.target.value); e.target.value = '' } }}>
+            <option value="" disabled>Пт</option>
+            {['9','10','11','12','13','14','16','18','20','24','28','32','36','48'].map(s => (
+              <option key={s} value={s + 'px'}>{s}</option>
+            ))}
+          </select>
+
+          <Sep />
+
+          {/* Цвет текста */}
+          <label className="toolbar-btn toolbar-color-lbl" title="Цвет текста (выделите текст)" onMouseDown={e => e.preventDefault()}>
+            <span style={{ fontWeight: 900, fontSize: 13, lineHeight: 1 }}>A</span>
+            <span className="toolbar-color-bar" style={{ background: textColor }} />
+            <input ref={colorInputRef} type="color" value={textColor}
+              className="toolbar-hidden-input"
+              onChange={e => { setTextColor(e.target.value); applyTextColor(e.target.value) }} />
+          </label>
+
+          {/* Цвет выделения */}
+          <label className="toolbar-btn toolbar-color-lbl" title="Цвет выделения" onMouseDown={e => e.preventDefault()}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 10h4M7.5 1.5l3 3-5 5H3v-2.5l4.5-5.5z"/>
+            </svg>
+            <span className="toolbar-color-bar" style={{ background: hlColor === 'transparent' ? 'var(--line-1)' : hlColor }} />
+            <input ref={hlInputRef} type="color" value={hlColor === 'transparent' ? '#fde68a' : hlColor}
+              className="toolbar-hidden-input"
+              onChange={e => { setHlColor(e.target.value); applyHilight(e.target.value) }} />
+          </label>
+          {hlColor !== 'transparent' && (
+            <button className="toolbar-btn" title="Снять выделение" style={{ fontSize: 9, width: 18 }}
+              onMouseDown={e => { e.preventDefault(); setHlColor('transparent'); applyHilight('inherit') }}>✕</button>
+          )}
+
+          <Sep />
+
+          {/* Нижний / верхний индекс */}
+          <ToolBtn title="Нижний индекс" onClick={() => exec('subscript')}>
+            <span style={{ fontSize: 11, lineHeight: 1 }}>x<sub style={{ fontSize: 7 }}>2</sub></span>
+          </ToolBtn>
+          <ToolBtn title="Верхний индекс" onClick={() => exec('superscript')}>
+            <span style={{ fontSize: 11, lineHeight: 1 }}>x<sup style={{ fontSize: 7 }}>2</sup></span>
+          </ToolBtn>
+
+          <Sep />
+
+          {/* Сбросить форматирование */}
+          <ToolBtn title="Сбросить форматирование (Ctrl+\\)" onClick={clearFormatting}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+              <path d="M2 3h9M4.5 3 3 10M7 3l1.5 7M1.5 10h4"/>
+              <path d="M9.5 8.5l2 2M11.5 8.5l-2 2"/>
+            </svg>
+          </ToolBtn>
+
+          {/* ── Разделитель строк ── */}
+          <div className="toolbar-row-break" />
+
+          {/* ── Строка 2: форматирование текста ── */}
           <ToolBtn title="Жирный (Ctrl+B)" onClick={() => exec('bold')}><b>B</b></ToolBtn>
           <ToolBtn title="Курсив (Ctrl+I)" onClick={() => exec('italic')}><i>I</i></ToolBtn>
           <ToolBtn title="Подчёркнутый (Ctrl+U)" onClick={() => exec('underline')}><u>U</u></ToolBtn>
@@ -503,11 +669,8 @@ export default function DocumentEditor({ case_: c, document: doc, onSave, onSave
 
           <Sep />
           <ToolBtn title="Цитата" onClick={() => exec('formatBlock', 'blockquote')}>❝</ToolBtn>
-          <select
-            className="toolbar-select"
-            defaultValue=""
-            onChange={e => { exec('formatBlock', e.target.value); e.target.value = '' }}
-          >
+          <select className="toolbar-select" defaultValue=""
+            onChange={e => { exec('formatBlock', e.target.value); e.target.value = '' }}>
             <option value="" disabled>Заголовок</option>
             <option value="h1">H1</option>
             <option value="h2">H2</option>
@@ -517,7 +680,7 @@ export default function DocumentEditor({ case_: c, document: doc, onSave, onSave
 
           <Sep />
           <ToolBtn title="Разрыв страницы" onClick={insertPageBreak}>⊟</ToolBtn>
-          <ToolBtn title="Следующий плейсхолдер (Tab по [ПОЛЯМ])" onClick={jumpToNextPlaceholder}>
+          <ToolBtn title="Следующий плейсхолдер" onClick={jumpToNextPlaceholder}>
             <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#818cf8' }}>[▶]</span>
           </ToolBtn>
 
@@ -542,16 +705,9 @@ export default function DocumentEditor({ case_: c, document: doc, onSave, onSave
                 </span>
               )}
             </button>
-            <button
-              className="toolbar-btn"
-              title="Добавить комментарий к выделенному тексту"
-              onMouseDown={e => { e.preventDefault(); startAddComment() }}
-            >
-              💬+
-            </button>
-            <div style={{ fontSize: 10, color: 'var(--text-3)' }}>
-              Tip: / для команд
-            </div>
+            <button className="toolbar-btn" title="Добавить комментарий к выделенному тексту"
+              onMouseDown={e => { e.preventDefault(); startAddComment() }}>💬+</button>
+            <div style={{ fontSize: 10, color: 'var(--text-3)' }}>/ — команды</div>
           </div>
         </div>
 
@@ -563,6 +719,7 @@ export default function DocumentEditor({ case_: c, document: doc, onSave, onSave
           onInput={handleInput}
           onKeyDown={handleKeyDown}
           onClick={handleEditorClick}
+          onPaste={handlePaste}
           spellCheck={false}
         />
 

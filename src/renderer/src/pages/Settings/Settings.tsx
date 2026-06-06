@@ -418,10 +418,10 @@ export default function Settings() {
               <SectionTitle>Что нового в v{appVersion}</SectionTitle>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
-                  ['Напоминания и дедлайны по делам', 'var(--ac)'],
-                  ['Приоритеты дел — срочные дела выделяются и показываются первыми', 'var(--red)'],
-                  ['Статистика дел за неделю в боковой панели', 'var(--green)'],
-                  ['Тёмная и светлая тема с переключением в настройках', 'var(--amber)'],
+                  ['Полноценный редактор — шрифты, размер, цвет текста, выделение, индексы', 'var(--ac)'],
+                  ['Исправлен баг со сменой шрифта при вставке текста из Word/браузера', 'var(--green)'],
+                  ['Горячая клавиша Ctrl+\\ для сброса форматирования', 'var(--amber)'],
+                  ['Имя судьи в боковом меню теперь берётся из настроек', 'var(--t2)'],
                 ].map(([text, color]) => (
                   <div key={text as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: color as string, marginTop: 5, flexShrink: 0 }} />

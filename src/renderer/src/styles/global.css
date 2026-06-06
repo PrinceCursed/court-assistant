@@ -562,11 +562,12 @@ html, body, #root {
 }
 .toolbar-divider { width: 1px; height: 16px; background: var(--line-1); margin: 0 3px; flex-shrink: 0; }
 .toolbar-btn {
-  width: 26px; height: 26px; border: none; background: transparent;
+  min-width: 26px; height: 26px; border: none; background: transparent;
   border-radius: var(--r1); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   color: var(--t2); font-size: 12px; font-weight: 700;
   transition: background var(--dur-fast), color var(--dur-fast); flex-shrink: 0;
+  position: relative;
 }
 .toolbar-btn:hover  { background: var(--bg-3); color: var(--t1); }
 .toolbar-btn.active { background: var(--ac-bg); color: var(--ac2); }
@@ -585,6 +586,29 @@ html, body, #root {
   transition: all var(--dur-fast); white-space: nowrap;
 }
 .section-btn:hover { background: var(--ac); color: #fff; }
+
+/* Full-width line break inside the flex toolbar */
+.toolbar-row-break {
+  flex-basis: 100%; height: 1px;
+  background: var(--line-0); margin: 2px -10px 3px;
+  flex-shrink: 0;
+}
+
+/* Color button label (wraps icon + color bar + hidden <input type=color>) */
+.toolbar-color-lbl {
+  position: relative; overflow: visible;
+  cursor: pointer; flex-direction: column;
+  padding-bottom: 6px !important;
+  user-select: none;
+}
+.toolbar-color-bar {
+  position: absolute; bottom: 2px; left: 3px; right: 3px;
+  height: 3px; border-radius: 2px;
+}
+.toolbar-hidden-input {
+  position: absolute; opacity: 0; width: 0; height: 0;
+  pointer-events: none; top: 0; left: 0;
+}
 
 /* ── Editor area ── */
 .editor-area {
