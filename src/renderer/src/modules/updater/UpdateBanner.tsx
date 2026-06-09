@@ -126,14 +126,14 @@ export default function UpdateBanner() {
   // ── Dot color ─────────────────────────────────────────────────────────────
 
   const dotColor =
-    state === 'available'   ? '#7c72f5' :
+    state === 'available'   ? '#f97316' :
     state === 'downloading' ? '#5b9cf6' :
     state === 'ready'       ? '#3ecf8e' :
     state === 'error'       ? '#f06c6c' :
     state === 'checking'    ? '#f5a623' : '#6a6682'
 
   const dotGlow =
-    state === 'available'   ? '0 0 6px #7c72f5' :
+    state === 'available'   ? '0 0 6px #f97316' :
     state === 'downloading' ? '0 0 6px #5b9cf6' :
     state === 'ready'       ? '0 0 6px #3ecf8e' :
     state === 'error'       ? '0 0 6px #f06c6c' : 'none'
@@ -148,9 +148,9 @@ export default function UpdateBanner() {
       zIndex: 9999,
       width: 300,
       background: 'rgba(17,17,20,0.97)',
-      border: '1px solid rgba(124,114,245,0.35)',
+      border: '1px solid rgba(249,115,22,0.35)',
       borderRadius: 14,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(124,114,245,0.12)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(249,115,22,0.12)',
       padding: '14px 16px',
       fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       fontSize: 12,
@@ -201,7 +201,7 @@ export default function UpdateBanner() {
       {state === 'available' && (
         <div style={{ color: '#a8a4c0', lineHeight: 1.5 }}>
           Найдена версия{' '}
-          <span style={{ color: '#9d95f8', fontWeight: 600 }}>v{newVersion}</span>
+          <span style={{ color: '#fb923c', fontWeight: 600 }}>v{newVersion}</span>
           {' '}— загрузка начата...
         </div>
       )}
@@ -220,7 +220,7 @@ export default function UpdateBanner() {
             <div style={{
               height: '100%',
               width: `${progress.percent}%`,
-              background: 'linear-gradient(90deg, #5b9cf6, #7c72f5)',
+              background: 'linear-gradient(90deg, #f97316, #fb923c)',
               borderRadius: 4,
               transition: 'width 300ms ease',
             }} />
@@ -282,7 +282,7 @@ export default function UpdateBanner() {
             onClick={handleCheck}
             style={{
               padding: '5px 12px', background: 'transparent',
-              color: '#7c72f5', border: '1px solid rgba(124,114,245,0.35)',
+              color: '#f97316', border: '1px solid rgba(249,115,22,0.35)',
               borderRadius: 7, cursor: 'pointer',
               fontSize: 11.5, fontWeight: 600,
             }}

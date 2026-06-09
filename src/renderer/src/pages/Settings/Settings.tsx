@@ -388,7 +388,7 @@ export default function Settings() {
           <>
             <SectionCard style={{ background: 'linear-gradient(135deg,var(--bg-2),var(--bg-1))', borderColor: 'var(--line-2)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
-                <div style={{ width: 48, height: 48, borderRadius: 11, background: 'linear-gradient(135deg,var(--ac) 0%,#4f44d4 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(124,114,245,0.4),inset 0 1px 0 rgba(255,255,255,0.15)', flexShrink: 0 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 11, background: 'linear-gradient(135deg,var(--ac) 0%,#c2561a 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(249,115,22,0.4),inset 0 1px 0 rgba(255,255,255,0.15)', flexShrink: 0 }}>
                   <svg width="22" height="22" viewBox="0 0 13 13" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M6.5 1v11M1.5 4.5l5-3.5 5 3.5M1 12h11M3.5 12V8M9.5 12V8"/>
                   </svg>
