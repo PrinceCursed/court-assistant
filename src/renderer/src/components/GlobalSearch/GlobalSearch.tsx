@@ -8,7 +8,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp } from '../../store/AppContext'
-import { Case } from '../../types'
+import { Case, PARTICIPANT_ROLE_LABELS } from '../../types'
 
 // ── Result types ───────────────────────────────────────────────────────────────
 
@@ -98,7 +98,7 @@ function buildResults(cases: Case[], query: string): SearchResult[] {
           id: `participant-${c.id}-${p.id}`,
           kind: 'participant',
           title: fullName,
-          subtitle: `Дело №${c.caseNumber} · ${p.role}`,
+          subtitle: `Дело №${c.caseNumber} · ${PARTICIPANT_ROLE_LABELS[p.role]}`,
           caseId: c.id,
           icon: '👤',
           score: pScore,
@@ -154,12 +154,18 @@ export default function GlobalSearch({ open, onClose }: Props) {
     }
   }, [onClose, openCase, setView])
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
+  const onKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') { onClose(); return }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, results.length - 1)) }
-    if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, 0)) }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveIdx(i => results.length > 0 ? Math.min(i + 1, results.length - 1) : 0)
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveIdx(i => Math.max(i - 1, 0))
+    }
     if (e.key === 'Enter' && results[activeIdx]) navigate(results[activeIdx])
-  }
+  }, [results, activeIdx, navigate, onClose])
 
   if (!open) return null
 

@@ -58,7 +58,7 @@ function parseForumHtml(html: string): Partial<FormData> {
     {
       field: 'lawyer',
       patterns: [
-        /^законный представитель\s*[/\/]?\s*адвокат\s*[:：]\s*(.+)/i,
+        /^законный представитель\s*[/]?\s*адвокат\s*[:：]\s*(.+)/i,
         /^адвокат\s*[:：]\s*(.+)/i,
         /^законный представитель\s*[:：]\s*(.+)/i,
         /^представитель\s*[:：]\s*(.+)/i,
@@ -244,6 +244,7 @@ export default function ActiveCases() {
 
   const openEdit = (c: Case) => {
     setShowCreate(false)
+    setShowUrlImport(false)
     setForm({
       caseNumber: c.caseNumber, title: c.title,
       plaintiff: c.plaintiff, defendant: c.defendant,
@@ -290,7 +291,7 @@ export default function ActiveCases() {
   // which was causing cursor to jump back to first input on every keystroke
   const formContent = (
     <>
-      {showCreate && showUrlImport && (
+      {showUrlImport && (
         <UrlImportPanel
           onFill={handleUrlFill}
           onClose={() => setShowUrlImport(false)}
