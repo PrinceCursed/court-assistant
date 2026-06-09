@@ -290,3 +290,18 @@ ipcMain.on('updater:install', () => {
 
 /** Returns the current app version (from package.json at build time) */
 ipcMain.handle('updater:getVersion', () => app.getVersion())
+
+// ── URL fetch (for forum parser) ──────────────────────────────────────────────
+// Renderer cannot fetch external URLs due to CORS; main process does it via net.
+
+ipcMain.handle('fetch:url', async (_e, url: string) => {
+  try {
+    const resp = await net.fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120' }
+    })
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+    return { ok: true, html: await resp.text() }
+  } catch (err) {
+    return { ok: false, error: String(err) }
+  }
+})

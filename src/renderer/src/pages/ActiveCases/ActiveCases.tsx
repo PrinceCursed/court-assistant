@@ -15,11 +15,201 @@ interface FormData {
   priority: 'normal' | 'urgent'
 }
 
+// ── Forum URL parser ──────────────────────────────────────────────────────────
+
+/**
+ * Parses a forum.gta5rp.com lawsuit thread HTML and extracts:
+ *   истец (plaintiff), ответчик (defendant), законный представитель / адвокат (lawyer)
+ *
+ * Forum posts follow a consistent template:
+ *   Истец: <name>
+ *   Ответчик: <name>
+ *   Законный представитель / Адвокат: <name>
+ */
+function parseForumHtml(html: string): Partial<FormData> {
+  // Extract all text lines from the first post body
+  // Strip HTML tags to get plain text
+  const plain = html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#\d+;/g, ' ')
+
+  const lines = plain.split('\n').map(l => l.trim()).filter(Boolean)
+
+  const extracted: Partial<FormData> = {}
+
+  const FIELD_PATTERNS: { field: keyof FormData; patterns: RegExp[] }[] = [
+    {
+      field: 'plaintiff',
+      patterns: [/^истец\s*[:：]\s*(.+)/i, /^заявитель\s*[:：]\s*(.+)/i]
+    },
+    {
+      field: 'defendant',
+      patterns: [/^ответчик\s*[:：]\s*(.+)/i, /^обвиняемый\s*[:：]\s*(.+)/i]
+    },
+    {
+      field: 'lawyer',
+      patterns: [
+        /^законный представитель\s*[/\/]?\s*адвокат\s*[:：]\s*(.+)/i,
+        /^адвокат\s*[:：]\s*(.+)/i,
+        /^законный представитель\s*[:：]\s*(.+)/i,
+        /^представитель\s*[:：]\s*(.+)/i,
+      ]
+    },
+    {
+      field: 'prosecutor',
+      patterns: [/^прокурор\s*[:：]\s*(.+)/i]
+    },
+  ]
+
+  for (const line of lines) {
+    for (const { field, patterns } of FIELD_PATTERNS) {
+      if (extracted[field]) continue
+      for (const pat of patterns) {
+        const m = line.match(pat)
+        if (m && m[1]) {
+          const value = m[1].trim().replace(/^[-—–]\s*/, '').trim()
+          if (value && value !== '-' && value !== '—' && value.length < 100) {
+            extracted[field] = value
+          }
+          break
+        }
+      }
+    }
+  }
+
+  return extracted
+}
+
+// ── URL import component (inline) ─────────────────────────────────────────────
+
+interface UrlImportProps {
+  onFill: (data: Partial<FormData>) => void
+  onClose: () => void
+}
+
+function UrlImportPanel({ onFill, onClose }: UrlImportProps) {
+  const [url, setUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [preview, setPreview] = useState<Partial<FormData> | null>(null)
+
+  const handleFetch = async () => {
+    const trimmed = url.trim()
+    if (!trimmed) return
+    if (!trimmed.includes('forum.gta5rp.com') && !trimmed.startsWith('http')) {
+      setError('Вставьте ссылку на форум forum.gta5rp.com')
+      return
+    }
+    setLoading(true)
+    setError('')
+    setPreview(null)
+
+    try {
+      const result = await window.api.fetchUrl(trimmed)
+      if (!result.ok || !result.html) {
+        setError(result.error || 'Не удалось загрузить страницу')
+        return
+      }
+      const data = parseForumHtml(result.html)
+      if (!data.plaintiff && !data.defendant) {
+        setError('Не удалось найти данные иска. Убедитесь, что это ссылка на тему с исковым заявлением.')
+        return
+      }
+      setPreview(data)
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleApply = () => {
+    if (preview) {
+      onFill(preview)
+      onClose()
+    }
+  }
+
+  return (
+    <div style={{
+      background: 'var(--bg-3)',
+      border: '1px solid var(--ac-border)',
+      borderRadius: 12,
+      padding: '14px 16px',
+      marginBottom: 16,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 15 }}>🔗</span>
+        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--t1)' }}>Импорт по ссылке с форума</span>
+        <button
+          onClick={onClose}
+          style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 16, lineHeight: 1 }}
+        >×</button>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+        <input
+          className="input"
+          style={{ flex: 1, fontSize: 12 }}
+          placeholder="https://forum.gta5rp.com/threads/..."
+          value={url}
+          onChange={e => { setUrl(e.target.value); setError(''); setPreview(null) }}
+          onKeyDown={e => e.key === 'Enter' && handleFetch()}
+          autoFocus
+        />
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={handleFetch}
+          disabled={loading || !url.trim()}
+          style={{ flexShrink: 0 }}
+        >
+          {loading ? '⟳' : 'Загрузить'}
+        </button>
+      </div>
+
+      {error && (
+        <div style={{ color: 'var(--red, #f87171)', fontSize: 12, marginBottom: 8 }}>{error}</div>
+      )}
+
+      {preview && (
+        <div style={{ background: 'var(--bg-2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
+          <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 8, fontWeight: 600 }}>НАЙДЕНО:</div>
+          {preview.plaintiff  && <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 4 }}>👤 <strong>Истец:</strong> {preview.plaintiff}</div>}
+          {preview.defendant  && <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 4 }}>👤 <strong>Ответчик:</strong> {preview.defendant}</div>}
+          {preview.lawyer     && <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 4 }}>⚖️ <strong>Адвокат:</strong> {preview.lawyer}</div>}
+          {preview.prosecutor && <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 4 }}>🏛️ <strong>Прокурор:</strong> {preview.prosecutor}</div>}
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={handleApply}
+            style={{ marginTop: 8, width: '100%' }}
+          >
+            ✓ Заполнить форму
+          </button>
+        </div>
+      )}
+
+      <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>
+        Поддерживаются ссылки на темы forum.gta5rp.com с исковыми заявлениями
+      </div>
+    </div>
+  )
+}
+
 export default function ActiveCases() {
   const { cases, createCase, updateCase, setView, openCase, nextCaseNumber } = useApp()
   const [showCreate, setShowCreate] = useState(false)
   const [editCase, setEditCase] = useState<Case | null>(null)
   const [search, setSearch] = useState('')
+  const [showUrlImport, setShowUrlImport] = useState(false)
   const [form, setForm] = useState<FormData>({
     caseNumber: '', title: '', plaintiff: '', defendant: '',
     prosecutor: '', lawyer: '', description: '', priority: 'normal'
@@ -43,8 +233,13 @@ export default function ActiveCases() {
 
   const openNewCase = () => {
     setEditCase(null)
+    setShowUrlImport(false)
     setForm({ caseNumber: nextCaseNumber(), title: '', plaintiff: '', defendant: '', prosecutor: '', lawyer: '', description: '', priority: 'normal' })
     setShowCreate(true)
+  }
+
+  const handleUrlFill = (data: Partial<FormData>) => {
+    setForm(prev => ({ ...prev, ...data }))
   }
 
   const openEdit = (c: Case) => {
@@ -95,6 +290,12 @@ export default function ActiveCases() {
   // which was causing cursor to jump back to first input on every keystroke
   const formContent = (
     <>
+      {showCreate && showUrlImport && (
+        <UrlImportPanel
+          onFill={handleUrlFill}
+          onClose={() => setShowUrlImport(false)}
+        />
+      )}
       <div className="form-row form-row-2">
         <div className="input-group">
           <label className="input-label">Номер дела</label>
@@ -195,6 +396,14 @@ export default function ActiveCases() {
           footer={
             <>
               <button className="btn btn-ghost" onClick={() => setShowCreate(false)}>Отмена</button>
+              <button
+                className="btn btn-ghost"
+                onClick={() => setShowUrlImport(v => !v)}
+                title="Заполнить из ссылки на форум"
+                style={{ color: 'var(--ac2)' }}
+              >
+                🔗 По ссылке
+              </button>
               <button className="btn btn-primary" onClick={handleCreate}>Создать дело</button>
             </>
           }

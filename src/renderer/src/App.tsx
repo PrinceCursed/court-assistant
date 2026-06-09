@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useApp } from './store/AppContext'
 import Layout from './components/Layout/Layout'
 import ActiveCases from './pages/ActiveCases/ActiveCases'
@@ -10,9 +10,11 @@ import Settings from './pages/Settings/Settings'
 import CaseWorkspace from './pages/CaseWorkspace/CaseWorkspace'
 import DocumentEditor from './pages/CaseWorkspace/tabs/DocumentEditor'
 import UpdateBanner from './modules/updater/UpdateBanner'
+import GlobalSearch from './components/GlobalSearch/GlobalSearch'
 
 export default function App() {
   const { view, setView, updateCase, cases } = useApp()
+  const [searchOpen, setSearchOpen] = useState(false)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -23,6 +25,11 @@ export default function App() {
         e.preventDefault()
         setView({ type: 'active-cases' })
         document.dispatchEvent(new CustomEvent('new-case'))
+      }
+
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(prev => !prev)
       }
 
       // Only dispatch global save/export when NOT inside a rich-text editor.
@@ -39,7 +46,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [setView])
+  }, [setView, setSearchOpen])
 
   const renderMain = () => {
     switch (view.type) {
@@ -87,6 +94,7 @@ export default function App() {
     <>
       <Layout>{renderMain()}</Layout>
       <UpdateBanner />
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   )
 }

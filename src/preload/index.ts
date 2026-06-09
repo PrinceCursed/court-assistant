@@ -74,5 +74,11 @@ contextBridge.exposeInMainWorld('api', {
   removeUpdateListeners: () => {
     ipcRenderer.removeAllListeners('updater:status')
     ipcRenderer.removeAllListeners('updater:progress')
-  }
+  },
+
+  /**
+   * Fetch an external URL from the main process (bypasses renderer CORS).
+   * Returns { ok: true, html: string } or { ok: false, error: string }.
+   */
+  fetchUrl: (url: string) => ipcRenderer.invoke('fetch:url', url)
 })

@@ -273,6 +273,7 @@ declare global {
       onUpdateStatus: (cb: (payload: { state: string; data?: unknown }) => void) => void
       onUpdateProgress: (cb: (payload: { percent: number; transferred: number; total: number; speed: number }) => void) => void
       removeUpdateListeners: () => void
+      fetchUrl: (url: string) => Promise<{ ok: boolean; html?: string; error?: string }>
     }
   }
 }
