@@ -272,7 +272,7 @@ export default function Documents({ case_: c }: Props) {
 
       {c.documents.length === 0 ? (
         <div className="empty-state" style={{ height: 'auto', paddingTop: 60 }}>
-          <div className="empty-state-icon">📋</div>
+          <div className="empty-state-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h4"/></svg></div>
           <div className="empty-state-text">Нет документов</div>
           <div className="empty-state-sub">Нажмите «+ Новый документ» для создания</div>
         </div>
@@ -292,8 +292,8 @@ export default function Documents({ case_: c }: Props) {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-              <button className="btn btn-icon btn-ghost" onClick={() => openDocument(doc)} title="Редактировать">✏️</button>
-              <button className="btn btn-icon btn-ghost" onClick={() => deleteDocument(doc.id)} title="Удалить" style={{ color: 'var(--red)' }}>🗑️</button>
+              <button className="btn btn-icon btn-ghost" onClick={() => openDocument(doc)} title="Редактировать"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+              <button className="btn btn-icon btn-ghost" onClick={() => deleteDocument(doc.id)} title="Удалить" style={{ color: 'var(--red)' }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
             </div>
           </div>
         ))

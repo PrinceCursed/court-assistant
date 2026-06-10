@@ -3,6 +3,7 @@ import { useApp } from '../../store/AppContext'
 import CaseCard from '../../components/CaseCard/CaseCard'
 import Modal from '../../components/Modal/Modal'
 import { Case } from '../../types'
+import { parseCaseText, parseForumHtml, ParsedCase } from './forumParser'
 
 interface FormData {
   caseNumber: string
@@ -15,113 +16,81 @@ interface FormData {
   priority: 'normal' | 'urgent'
 }
 
-// ── Forum URL parser ──────────────────────────────────────────────────────────
+// ── Shared inline icons ───────────────────────────────────────────────────────
 
-/**
- * Parses a forum.gta5rp.com lawsuit thread HTML and extracts:
- *   истец (plaintiff), ответчик (defendant), законный представитель / адвокат (lawyer)
- *
- * Forum posts follow a consistent template:
- *   Истец: <name>
- *   Ответчик: <name>
- *   Законный представитель / Адвокат: <name>
- */
-function parseForumHtml(html: string): Partial<FormData> {
-  // Extract all text lines from the first post body
-  // Strip HTML tags to get plain text
-  const plain = html
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&#\d+;/g, ' ')
-
-  const lines = plain.split('\n').map(l => l.trim()).filter(Boolean)
-
-  const extracted: Partial<FormData> = {}
-
-  const FIELD_PATTERNS: { field: keyof FormData; patterns: RegExp[] }[] = [
-    {
-      field: 'plaintiff',
-      patterns: [/^истец\s*[:：]\s*(.+)/i, /^заявитель\s*[:：]\s*(.+)/i]
-    },
-    {
-      field: 'defendant',
-      patterns: [/^ответчик\s*[:：]\s*(.+)/i, /^обвиняемый\s*[:：]\s*(.+)/i]
-    },
-    {
-      field: 'lawyer',
-      patterns: [
-        /^законный представитель\s*[/]?\s*адвокат\s*[:：]\s*(.+)/i,
-        /^адвокат\s*[:：]\s*(.+)/i,
-        /^законный представитель\s*[:：]\s*(.+)/i,
-        /^представитель\s*[:：]\s*(.+)/i,
-      ]
-    },
-    {
-      field: 'prosecutor',
-      patterns: [/^прокурор\s*[:：]\s*(.+)/i]
-    },
-  ]
-
-  for (const line of lines) {
-    for (const { field, patterns } of FIELD_PATTERNS) {
-      if (extracted[field]) continue
-      for (const pat of patterns) {
-        const m = line.match(pat)
-        if (m && m[1]) {
-          const value = m[1].trim().replace(/^[-—–]\s*/, '').trim()
-          if (value && value !== '-' && value !== '—' && value.length < 100) {
-            extracted[field] = value
-          }
-          break
-        }
-      }
-    }
-  }
-
-  return extracted
+const I = {
+  link: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+  ),
+  search: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+    </svg>
+  ),
+  plus: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  ),
+  check: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  ),
 }
 
-// ── URL import component (inline) ─────────────────────────────────────────────
+// ── Import panel (link + paste-text fallback) ─────────────────────────────────
 
 interface UrlImportProps {
-  onFill: (data: Partial<FormData>) => void
+  onFill: (data: ParsedCase) => void
   onClose: () => void
 }
 
-function UrlImportPanel({ onFill, onClose }: UrlImportProps) {
+function ImportPanel({ onFill, onClose }: UrlImportProps) {
+  const [mode, setMode] = useState<'url' | 'text'>('url')
   const [url, setUrl] = useState('')
+  const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [preview, setPreview] = useState<Partial<FormData> | null>(null)
+  const [hint, setHint] = useState('')
+  const [preview, setPreview] = useState<ParsedCase | null>(null)
+
+  const reset = () => { setError(''); setHint(''); setPreview(null) }
 
   const handleFetch = async () => {
     const trimmed = url.trim()
     if (!trimmed) return
-    if (!trimmed.includes('forum.gta5rp.com') && !trimmed.startsWith('http')) {
-      setError('Вставьте ссылку на форум forum.gta5rp.com')
+    if (!/^https?:\/\//i.test(trimmed)) {
+      setError('Вставьте полную ссылку, начиная с https://')
       return
     }
     setLoading(true)
-    setError('')
-    setPreview(null)
+    reset()
 
     try {
       const result = await window.api.fetchUrl(trimmed)
       if (!result.ok || !result.html) {
-        setError(result.error || 'Не удалось загрузить страницу')
+        if (result.error === 'CLOUDFLARE') {
+          setError('Форум закрыт защитой Cloudflare и не отдаёт страницу программе.')
+          setHint('Откройте тему в браузере, скопируйте текст иска и используйте режим «Вставить текст».')
+          setMode('text')
+        } else if (result.error === 'LOGIN_REQUIRED') {
+          setError('Тема находится в закрытом разделе — без авторизации её не открыть.')
+          setHint('Скопируйте текст иска из браузера и используйте режим «Вставить текст».')
+          setMode('text')
+        } else {
+          setError(`Не удалось загрузить страницу (${result.error || 'неизвестная ошибка'}).`)
+          setHint('Проверьте ссылку или используйте режим «Вставить текст».')
+        }
         return
       }
       const data = parseForumHtml(result.html)
       if (!data.plaintiff && !data.defendant) {
-        setError('Не удалось найти данные иска. Убедитесь, что это ссылка на тему с исковым заявлением.')
+        setError('Страница загрузилась, но данные иска не найдены.')
+        setHint('Убедитесь, что это тема с исковым заявлением, либо вставьте текст иска вручную.')
         return
       }
       setPreview(data)
@@ -132,6 +101,16 @@ function UrlImportPanel({ onFill, onClose }: UrlImportProps) {
     }
   }
 
+  const handleParseText = () => {
+    reset()
+    const data = parseCaseText(text)
+    if (!data.plaintiff && !data.defendant) {
+      setError('Не удалось найти строки «Истец: …» и «Ответчик: …» в тексте.')
+      return
+    }
+    setPreview(data)
+  }
+
   const handleApply = () => {
     if (preview) {
       onFill(preview)
@@ -139,77 +118,86 @@ function UrlImportPanel({ onFill, onClose }: UrlImportProps) {
     }
   }
 
+  const previewRow = (label: string, value?: string) => value ? (
+    <div style={{ display: 'flex', gap: 8, fontSize: 12, marginBottom: 4 }}>
+      <span style={{ color: 'var(--t3)', minWidth: 72 }}>{label}</span>
+      <span style={{ color: 'var(--t1)', fontWeight: 600 }}>{value}</span>
+    </div>
+  ) : null
+
   return (
-    <div style={{
-      background: 'var(--bg-3)',
-      border: '1px solid var(--ac-border)',
-      borderRadius: 12,
-      padding: '14px 16px',
-      marginBottom: 16,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <span style={{ fontSize: 15 }}>🔗</span>
-        <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--t1)' }}>Импорт по ссылке с форума</span>
-        <button
-          onClick={onClose}
-          style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 16, lineHeight: 1 }}
-        >×</button>
+    <div className="import-panel">
+      <div className="import-panel-head">
+        <div className="import-tabs">
+          <button className={`import-tab ${mode === 'url' ? 'active' : ''}`} onClick={() => { setMode('url'); reset() }}>
+            {I.link} По ссылке
+          </button>
+          <button className={`import-tab ${mode === 'text' ? 'active' : ''}`} onClick={() => { setMode('text'); reset() }}>
+            Вставить текст
+          </button>
+        </div>
+        <button className="btn btn-icon btn-ghost btn-sm" onClick={onClose} title="Закрыть">✕</button>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-        <input
-          className="input"
-          style={{ flex: 1, fontSize: 12 }}
-          placeholder="https://forum.gta5rp.com/threads/..."
-          value={url}
-          onChange={e => { setUrl(e.target.value); setError(''); setPreview(null) }}
-          onKeyDown={e => e.key === 'Enter' && handleFetch()}
-          autoFocus
-        />
-        <button
-          className="btn btn-primary btn-sm"
-          onClick={handleFetch}
-          disabled={loading || !url.trim()}
-          style={{ flexShrink: 0 }}
-        >
-          {loading ? '⟳' : 'Загрузить'}
-        </button>
-      </div>
-
-      {error && (
-        <div style={{ color: 'var(--red, #f87171)', fontSize: 12, marginBottom: 8 }}>{error}</div>
+      {mode === 'url' ? (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            className="input"
+            style={{ flex: 1, fontSize: 12 }}
+            placeholder="https://forum.gta5rp.com/threads/…"
+            value={url}
+            onChange={e => { setUrl(e.target.value); reset() }}
+            onKeyDown={e => e.key === 'Enter' && handleFetch()}
+            autoFocus
+          />
+          <button className="btn btn-primary btn-sm" onClick={handleFetch} disabled={loading || !url.trim()} style={{ flexShrink: 0 }}>
+            {loading ? 'Загрузка…' : 'Загрузить'}
+          </button>
+        </div>
+      ) : (
+        <>
+          <textarea
+            className="textarea"
+            style={{ fontSize: 12, minHeight: 96 }}
+            placeholder={'Вставьте текст искового заявления с форума.\nНапример:\nИстец: John Doe\nОтветчик: Jane Smith'}
+            value={text}
+            onChange={e => { setText(e.target.value); reset() }}
+            autoFocus
+          />
+          <button className="btn btn-primary btn-sm" onClick={handleParseText} disabled={!text.trim()} style={{ marginTop: 8 }}>
+            Распознать
+          </button>
+        </>
       )}
 
+      {error && <div className="import-error">{error}</div>}
+      {hint && <div className="import-hint">{hint}</div>}
+
       {preview && (
-        <div style={{ background: 'var(--bg-2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
-          <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 8, fontWeight: 600 }}>НАЙДЕНО:</div>
-          {preview.plaintiff  && <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 4 }}>👤 <strong>Истец:</strong> {preview.plaintiff}</div>}
-          {preview.defendant  && <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 4 }}>👤 <strong>Ответчик:</strong> {preview.defendant}</div>}
-          {preview.lawyer     && <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 4 }}>⚖️ <strong>Адвокат:</strong> {preview.lawyer}</div>}
-          {preview.prosecutor && <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 4 }}>🏛️ <strong>Прокурор:</strong> {preview.prosecutor}</div>}
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={handleApply}
-            style={{ marginTop: 8, width: '100%' }}
-          >
-            ✓ Заполнить форму
+        <div className="import-preview">
+          <div className="import-preview-label">Найдено</div>
+          {previewRow('Название', preview.title)}
+          {previewRow('Истец', preview.plaintiff)}
+          {previewRow('Ответчик', preview.defendant)}
+          {previewRow('Адвокат', preview.lawyer)}
+          {previewRow('Прокурор', preview.prosecutor)}
+          <button className="btn btn-primary btn-sm" onClick={handleApply} style={{ marginTop: 8, width: '100%' }}>
+            {I.check} Заполнить форму
           </button>
         </div>
       )}
-
-      <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>
-        Поддерживаются ссылки на темы forum.gta5rp.com с исковыми заявлениями
-      </div>
     </div>
   )
 }
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ActiveCases() {
   const { cases, createCase, updateCase, setView, openCase, nextCaseNumber } = useApp()
   const [showCreate, setShowCreate] = useState(false)
   const [editCase, setEditCase] = useState<Case | null>(null)
   const [search, setSearch] = useState('')
-  const [showUrlImport, setShowUrlImport] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [form, setForm] = useState<FormData>({
     caseNumber: '', title: '', plaintiff: '', defendant: '',
     prosecutor: '', lawyer: '', description: '', priority: 'normal'
@@ -220,7 +208,6 @@ export default function ActiveCases() {
     .filter(c => !search || [c.caseNumber, c.title, c.plaintiff, c.defendant]
       .some(f => f.toLowerCase().includes(search.toLowerCase())))
     .sort((a, b) => {
-      // urgent (10) > pinned (5) > normal (0)
       const score = (c: typeof a) => (c.priority === 'urgent' ? 10 : 0) + (c.isPinned ? 5 : 0)
       return score(b) - score(a)
     })
@@ -233,18 +220,18 @@ export default function ActiveCases() {
 
   const openNewCase = () => {
     setEditCase(null)
-    setShowUrlImport(false)
+    setShowImport(false)
     setForm({ caseNumber: nextCaseNumber(), title: '', plaintiff: '', defendant: '', prosecutor: '', lawyer: '', description: '', priority: 'normal' })
     setShowCreate(true)
   }
 
-  const handleUrlFill = (data: Partial<FormData>) => {
+  const handleUrlFill = (data: ParsedCase) => {
     setForm(prev => ({ ...prev, ...data }))
   }
 
   const openEdit = (c: Case) => {
     setShowCreate(false)
-    setShowUrlImport(false)
+    setShowImport(false)
     setForm({
       caseNumber: c.caseNumber, title: c.title,
       plaintiff: c.plaintiff, defendant: c.defendant,
@@ -287,15 +274,16 @@ export default function ActiveCases() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm(p => ({ ...p, [key]: e.target.value }))
 
-  // FIX: inline JSX instead of inner component — prevents remounting on re-render
-  // which was causing cursor to jump back to first input on every keystroke
-  const formContent = (
+  // Inline JSX (not an inner component) — prevents remounting on re-render
+  const formContent = (isCreate: boolean) => (
     <>
-      {showUrlImport && (
-        <UrlImportPanel
-          onFill={handleUrlFill}
-          onClose={() => setShowUrlImport(false)}
-        />
+      {isCreate && !showImport && (
+        <button className="import-toggle" onClick={() => setShowImport(true)}>
+          {I.link} Импортировать с форума
+        </button>
+      )}
+      {isCreate && showImport && (
+        <ImportPanel onFill={handleUrlFill} onClose={() => setShowImport(false)} />
       )}
       <div className="form-row form-row-2">
         <div className="input-group">
@@ -327,29 +315,21 @@ export default function ActiveCases() {
           <input className="input" value={form.lawyer} onChange={ff('lawyer')} placeholder="Необязательно" />
         </div>
       </div>
-      <div className="input-group">
+      <div className="input-group" style={{ marginBottom: 13 }}>
         <label className="input-label">Краткое описание</label>
         <textarea className="textarea" value={form.description} onChange={ff('description')} placeholder="Описание дела..." rows={3} />
       </div>
       <div className="input-group">
         <label className="input-label">Приоритет</label>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="seg">
           {(['normal', 'urgent'] as const).map(p => (
             <button
               key={p}
               type="button"
+              className={`seg-btn ${form.priority === p ? (p === 'urgent' ? 'active-red' : 'active') : ''}`}
               onClick={() => setForm(prev => ({ ...prev, priority: p }))}
-              style={{
-                padding: '6px 16px',
-                border: `1px solid ${form.priority === p ? (p === 'urgent' ? 'var(--red)' : 'var(--ac)') : 'var(--border-2)'}`,
-                borderRadius: 'var(--r-sm)',
-                background: form.priority === p ? (p === 'urgent' ? 'var(--red-dim)' : 'var(--accent-dim)') : 'transparent',
-                color: form.priority === p ? (p === 'urgent' ? 'var(--red)' : 'var(--ac2)') : 'var(--text-2)',
-                cursor: 'pointer', fontWeight: 600, fontSize: 12,
-                transition: 'all 120ms',
-              }}
             >
-              {p === 'normal' ? '● Обычный' : '🔴 Срочный'}
+              {p === 'normal' ? 'Обычный' : 'Срочный'}
             </button>
           ))}
         </div>
@@ -361,26 +341,32 @@ export default function ActiveCases() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <div className="page-header">
         <div>
-          <div className="page-title">⚖️ Иски в работе</div>
-          <div className="page-subtitle">{active.length} {active.length === 1 ? 'дело' : 'дел'}</div>
+          <div className="page-title">Иски в работе</div>
+          <div className="page-subtitle">{active.length} {active.length === 1 ? 'дело' : active.length < 5 && active.length > 1 ? 'дела' : 'дел'}</div>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <input
-            className="input"
-            style={{ width: 220 }}
-            placeholder="🔍  Поиск дел..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          <button className="btn btn-primary" onClick={openNewCase}>+ Новый иск</button>
+          <div className="search-box">
+            {I.search}
+            <input
+              placeholder="Поиск дел..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <button className="btn btn-primary" onClick={openNewCase}>{I.plus} Новый иск</button>
         </div>
       </div>
 
       {active.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">⚖️</div>
+          <div className="empty-state-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3v18M5 6l7-3 7 3M3 21h18M6 21v-6M18 21v-6"/>
+              <path d="M5 6l-2.5 6a3 3 0 0 0 5 0L5 6zM19 6l-2.5 6a3 3 0 0 0 5 0L19 6z"/>
+            </svg>
+          </div>
           <div className="empty-state-text">{search ? 'Ничего не найдено' : 'Нет активных дел'}</div>
-          <div className="empty-state-sub">{!search && 'Нажмите «+ Новый иск» или Ctrl+N'}</div>
+          <div className="empty-state-sub">{!search && 'Нажмите «Новый иск» или Ctrl+N'}</div>
         </div>
       ) : (
         <div className="cases-grid">
@@ -397,19 +383,11 @@ export default function ActiveCases() {
           footer={
             <>
               <button className="btn btn-ghost" onClick={() => setShowCreate(false)}>Отмена</button>
-              <button
-                className="btn btn-ghost"
-                onClick={() => setShowUrlImport(v => !v)}
-                title="Заполнить из ссылки на форум"
-                style={{ color: 'var(--ac2)' }}
-              >
-                🔗 По ссылке
-              </button>
               <button className="btn btn-primary" onClick={handleCreate}>Создать дело</button>
             </>
           }
         >
-          {formContent}
+          {formContent(true)}
         </Modal>
       )}
 
@@ -424,7 +402,7 @@ export default function ActiveCases() {
             </>
           }
         >
-          {formContent}
+          {formContent(false)}
         </Modal>
       )}
     </div>

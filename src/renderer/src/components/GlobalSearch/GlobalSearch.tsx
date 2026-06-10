@@ -42,7 +42,7 @@ function highlight(text: string, query: string): React.ReactNode {
   return (
     <>
       {text.slice(0, idx)}
-      <mark style={{ background: 'rgba(249,115,22,0.35)', color: 'var(--ac2)', borderRadius: 2, padding: '0 1px' }}>
+      <mark style={{ background: 'rgba(223,160,63,0.35)', color: 'var(--ac2)', borderRadius: 2, padding: '0 1px' }}>
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -196,7 +196,7 @@ export default function GlobalSearch({ open, onClose }: Props) {
           background: 'var(--bg-2)',
           border: '1px solid var(--ac-border)',
           borderRadius: 16,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(249,115,22,0.1)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(223,160,63,0.1)',
           overflow: 'hidden',
           animation: 'slideDown 150ms cubic-bezier(.16,1,.3,1)',
         }}

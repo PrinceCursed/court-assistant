@@ -297,10 +297,37 @@ ipcMain.handle('updater:getVersion', () => app.getVersion())
 ipcMain.handle('fetch:url', async (_e, url: string) => {
   try {
     const resp = await net.fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120' }
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ru-RU,ru;q=0.9,en;q=0.8'
+      },
+      redirect: 'follow'
     })
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-    return { ok: true, html: await resp.text() }
+
+    const html = await resp.text().catch(() => '')
+
+    // Cloudflare challenge / bot protection — page loaded, but it's not the thread
+    const lower = html.slice(0, 4000).toLowerCase()
+    if (
+      resp.status === 403 || resp.status === 503 ||
+      lower.includes('just a moment') ||
+      lower.includes('cf-challenge') ||
+      lower.includes('challenge-platform')
+    ) {
+      return { ok: false, error: 'CLOUDFLARE' }
+    }
+
+    // XenForo login wall — thread is in a closed section
+    if (resp.status === 401 || lower.includes('login required') || /войдите.{0,40}чтобы/i.test(lower)) {
+      return { ok: false, error: 'LOGIN_REQUIRED' }
+    }
+
+    if (!resp.ok) return { ok: false, error: `HTTP ${resp.status}` }
+    if (!html) return { ok: false, error: 'EMPTY' }
+
+    return { ok: true, html }
   } catch (err) {
     return { ok: false, error: String(err) }
   }

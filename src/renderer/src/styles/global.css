@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@600;700&display=swap');
+/* Fonts are bundled locally (imported in main.tsx) — no network dependency */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -43,11 +43,11 @@
   --text-inv:    var(--bg-0);
 
   /* ── Accent: Orange ──────────────────────────────────── */
-  --ac:        #f97316;
-  --ac2:       #fb923c;
-  --ac-bg:     rgba(249,115,22,0.12);
-  --ac-border: rgba(249,115,22,0.35);
-  --ac-glow:   rgba(249,115,22,0.20);
+  --ac:        #dfa03f;
+  --ac2:       #eeb968;
+  --ac-bg:     rgba(223,160,63,0.12);
+  --ac-border: rgba(223,160,63,0.35);
+  --ac-glow:   rgba(223,160,63,0.20);
 
   /* Legacy aliases */
   --accent:        var(--ac);
@@ -81,7 +81,7 @@
   --sh2: 0 2px 8px rgba(0,0,0,0.5);
   --sh3: 0 6px 20px rgba(0,0,0,0.55);
   --sh4: 0 12px 40px rgba(0,0,0,0.65);
-  --sh-ac: 0 4px 20px rgba(249,115,22,0.35);
+  --sh-ac: 0 4px 20px rgba(223,160,63,0.35);
 
   /* Legacy aliases */
   --sh-xs:  var(--sh1);
@@ -91,7 +91,7 @@
   --sh-acc: var(--sh-ac);
 
   /* ── Typography ──────────────────────────────────────── */
-  --f:    'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --f:    'Geist Variable', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --fm:   'Geist Mono', 'SF Mono', 'Fira Code', monospace;
   --fs:   'Dancing Script', cursive;
 
@@ -170,9 +170,9 @@ html, body, #root {
 }
 .titlebar-logo {
   width: 24px; height: 24px; border-radius: 6px;
-  background: linear-gradient(135deg, var(--ac) 0%, #c2561a 100%);
+  background: linear-gradient(135deg, var(--ac) 0%, #a8762a 100%);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 1px 6px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: 0 1px 6px rgba(223,160,63,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
   flex-shrink: 0;
 }
 .titlebar-logo svg { width: 13px; height: 13px; }
@@ -180,20 +180,18 @@ html, body, #root {
   font-size: 13px; font-weight: 700; color: var(--t1); letter-spacing: -0.01em;
 }
 .titlebar-controls {
-  display: flex; align-items: center; gap: 5px;
-  padding: 0 12px; height: 100%;
+  display: flex; align-items: stretch; height: 100%;
   border-left: 1px solid var(--line-1);
   -webkit-app-region: no-drag;
 }
 .titlebar-btn {
-  width: 13px; height: 13px; border-radius: 50%; border: none; cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
-  transition: filter var(--dur-fast);
+  width: 42px; height: 100%; border: none; cursor: pointer;
+  background: transparent; color: var(--t3);
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
 }
-.titlebar-btn:hover { filter: brightness(1.25); }
-.titlebar-btn.close  { background: #ff5f57; }
-.titlebar-btn.min    { background: #febc2e; }
-.titlebar-btn.max    { background: #28c840; }
+.titlebar-btn:hover { background: var(--bg-3); color: var(--t1); }
+.titlebar-btn.close:hover { background: #d83a3a; color: #fff; }
 
 /* ═══════════════════════════════════════════════════════
    SIDEBAR
@@ -208,7 +206,7 @@ html, body, #root {
 .sidebar::after {
   content: ''; position: absolute; top: 0; right: -1px;
   width: 1px; height: 100%;
-  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.08) 40%, transparent);
+  background: linear-gradient(180deg, transparent, rgba(223,160,63,0.08) 40%, transparent);
   pointer-events: none;
 }
 .sidebar-header { padding: 10px 10px 2px; }
@@ -309,7 +307,7 @@ html, body, #root {
 }
 .btn-primary {
   background: var(--ac); color: #fff;
-  box-shadow: 0 1px 3px rgba(249,115,22,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+  box-shadow: 0 1px 3px rgba(223,160,63,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
 }
 .btn-primary:hover { background: var(--ac2); box-shadow: var(--sh-ac); transform: translateY(-1px); }
 .btn-primary:active { transform: translateY(0); }
@@ -372,7 +370,7 @@ html, body, #root {
 }
 .case-card::before {
   content: ''; position: absolute; inset: 0; border-radius: var(--r4);
-  background: radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.04) 0%, transparent 70%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(223,160,63,0.04) 0%, transparent 70%);
   opacity: 0; transition: opacity var(--dur); pointer-events: none;
 }
 .case-card:hover { border-color: var(--line-3); box-shadow: 0 4px 16px rgba(0,0,0,0.4); transform: translateY(-1px); }
@@ -708,14 +706,14 @@ html, body, #root {
    SMART FIELDS / PLACEHOLDERS
 ═══════════════════════════════════════════════════════ */
 mark.doc-placeholder {
-  background: rgba(249,115,22,0.16); color: #fb923c;
-  border: 1px solid rgba(249,115,22,0.38);
+  background: rgba(223,160,63,0.16); color: #eeb968;
+  border: 1px solid rgba(223,160,63,0.38);
   border-radius: 4px; padding: 1px 4px;
   cursor: pointer; font-style: italic; font-weight: 500;
   transition: background 0.15s; white-space: nowrap;
 }
 mark.doc-placeholder::after { content: ' ▾'; font-size: 0.75em; opacity: 0.7; font-style: normal; }
-mark.doc-placeholder:hover  { background: rgba(249,115,22,0.28); color: #fcd34d; }
+mark.doc-placeholder:hover  { background: rgba(223,160,63,0.28); color: #fcd34d; }
 
 span.smart-field-filled {
   background: rgba(62,207,142,0.12); color: var(--green);
@@ -730,7 +728,7 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
   background: var(--bg-2); border: 1px solid var(--line-2);
   border-radius: var(--r4);
   padding: 14px 16px;
-  box-shadow: var(--sh4), 0 0 0 1px rgba(249,115,22,0.10);
+  box-shadow: var(--sh4), 0 0 0 1px rgba(223,160,63,0.10);
   min-width: 280px;
 }
 .a4-page mark.doc-placeholder,
@@ -820,7 +818,7 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
 .dot-decision      { background: var(--purple); }
 .dot-closed        { background: var(--t4); }
 .dot-document-added{ background: var(--blue); }
-.dot-material-added{ background: #fb923c; }
+.dot-material-added{ background: #eeb968; }
 .dot-custom        { background: var(--t2); }
 .timeline-date  { font-size: 10px; color: var(--t3); font-weight: 600; margin-bottom: 2px; font-family: var(--fm); }
 .timeline-event { font-size: 12.5px; color: var(--t1); }
@@ -1107,3 +1105,97 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes spin      { to { transform: rotate(360deg); } }
 @keyframes pulse     { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ═══════════════════════════════════════════════════════
+   SEARCH BOX (page header)
+═══════════════════════════════════════════════════════ */
+.search-box {
+  display: flex; align-items: center; gap: 7px;
+  width: 230px; padding: 0 11px;
+  background: var(--bg-1);
+  border: 1px solid var(--line-1); border-radius: var(--r2);
+  color: var(--t4);
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.search-box:focus-within { border-color: var(--ac-border); box-shadow: 0 0 0 3px var(--ac-bg); color: var(--t3); }
+.search-box svg { flex-shrink: 0; }
+.search-box input {
+  flex: 1; padding: 7px 0; border: none; outline: none; background: transparent;
+  color: var(--t1); font-family: var(--f); font-size: 12.5px;
+  -webkit-app-region: no-drag;
+}
+.search-box input::placeholder { color: var(--t4); }
+
+/* ═══════════════════════════════════════════════════════
+   IMPORT PANEL (forum import in case modal)
+═══════════════════════════════════════════════════════ */
+.import-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 14px; padding: 6px 11px;
+  background: transparent; border: 1px dashed var(--line-3);
+  border-radius: var(--r2); cursor: pointer;
+  color: var(--t2); font-family: var(--f); font-size: 11.5px; font-weight: 600;
+  transition: all var(--dur-fast);
+}
+.import-toggle:hover { border-color: var(--ac-border); color: var(--ac2); background: var(--ac-bg); }
+
+.import-panel {
+  background: var(--bg-1);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r3);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.import-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.import-tabs {
+  display: inline-flex; gap: 2px;
+  background: var(--bg-0); border: 1px solid var(--line-1);
+  border-radius: var(--r2); padding: 2px;
+}
+.import-tab {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border: none; border-radius: 6px;
+  background: transparent; cursor: pointer;
+  color: var(--t3); font-family: var(--f); font-size: 11px; font-weight: 600;
+  transition: all var(--dur-fast);
+}
+.import-tab:hover { color: var(--t1); }
+.import-tab.active { background: var(--bg-3); color: var(--t1); }
+
+.import-error {
+  margin-top: 10px; padding: 8px 11px;
+  background: var(--red-bg); border: 1px solid rgba(240,108,108,0.2);
+  border-radius: var(--r2);
+  color: var(--red); font-size: 11.5px; line-height: 1.5;
+}
+.import-hint { margin-top: 6px; color: var(--t3); font-size: 11px; line-height: 1.5; }
+.import-preview {
+  margin-top: 10px; padding: 10px 12px;
+  background: var(--bg-2); border: 1px solid var(--line-1);
+  border-radius: var(--r2);
+}
+.import-preview-label {
+  font-size: 9.5px; font-weight: 700; color: var(--t4);
+  text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 7px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SEGMENTED CONTROL (priority etc.)
+═══════════════════════════════════════════════════════ */
+.seg {
+  display: inline-flex; gap: 2px;
+  background: var(--bg-0); border: 1px solid var(--line-1);
+  border-radius: var(--r2); padding: 2px;
+}
+.seg-btn {
+  padding: 5px 16px; border: none; border-radius: 6px;
+  background: transparent; cursor: pointer;
+  color: var(--t3); font-family: var(--f); font-size: 12px; font-weight: 600;
+  transition: all var(--dur-fast);
+}
+.seg-btn:hover { color: var(--t1); }
+.seg-btn.active { background: var(--ac-bg); color: var(--ac2); }
+.seg-btn.active-red { background: var(--red-bg); color: var(--red); }

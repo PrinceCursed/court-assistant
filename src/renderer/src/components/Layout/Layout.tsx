@@ -23,6 +23,11 @@ export default function Layout({ children }: Props) {
 
 function Titlebar() {
   const { view, cases } = useApp()
+  const [version, setVersion] = React.useState('')
+
+  React.useEffect(() => {
+    window.api.getAppVersion?.().then((v: string) => setVersion(v)).catch(() => {})
+  }, [])
 
   const breadcrumb = () => {
     if (view.type === 'active-cases')         return <span style={{ color: 'var(--t1)', fontWeight: 600 }}>Иски в работе</span>
@@ -82,7 +87,7 @@ function Titlebar() {
           background: 'var(--bg-3)', border: '1px solid var(--line-1)',
           borderRadius: 9999, padding: '1px 6px', fontFamily: 'var(--fm)',
           marginLeft: 2,
-        }}>v1.9.1</span>
+        }}>{version ? `v${version}` : ''}</span>
       </div>
 
       {/* Breadcrumb center */}
@@ -93,23 +98,17 @@ function Titlebar() {
         {breadcrumb()}
       </div>
 
-      {/* macOS-style window controls */}
+      {/* Windows-style window controls */}
       <div className="titlebar-controls">
-        <button
-          className="titlebar-btn close"
-          onClick={() => window.api.closeWindow()}
-          title="Закрыть"
-        />
-        <button
-          className="titlebar-btn min"
-          onClick={() => window.api.minimizeWindow()}
-          title="Свернуть"
-        />
-        <button
-          className="titlebar-btn max"
-          onClick={() => window.api.maximizeWindow()}
-          title="Развернуть"
-        />
+        <button className="titlebar-btn" onClick={() => window.api.minimizeWindow()} title="Свернуть">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor" strokeWidth="1.1"/></svg>
+        </button>
+        <button className="titlebar-btn" onClick={() => window.api.maximizeWindow()} title="Развернуть">
+          <svg width="10" height="10" viewBox="0 0 10 10"><rect x="0.8" y="0.8" width="8.4" height="8.4" fill="none" stroke="currentColor" strokeWidth="1.1"/></svg>
+        </button>
+        <button className="titlebar-btn close" onClick={() => window.api.closeWindow()} title="Закрыть">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" strokeWidth="1.1"/></svg>
+        </button>
       </div>
     </div>
   )

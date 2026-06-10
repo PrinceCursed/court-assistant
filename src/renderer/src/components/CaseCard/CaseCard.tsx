@@ -57,7 +57,11 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
       <div className="case-card-header">
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="case-number">
-            {c.isPinned && <span style={{ marginRight: 3 }}>📌</span>}
+            {c.isPinned && (
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: 3 }}>
+                <path d="M16 3l5 5-5.5 1.5L13 12l-1 5-3-3-5 5-1-1 5-5-3-3 5-1 2.5-2.5L14 3z"/>
+              </svg>
+            )}
             №{c.caseNumber}
             {c.priority === 'urgent' && (
               <span style={{
@@ -131,7 +135,10 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
             color: isOverdue ? 'var(--red)' : isDueToday ? 'var(--amber)' : 'var(--t3)',
             fontWeight: isOverdue || isDueToday ? 700 : 400,
           }}>
-            🔔 {deadlineDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 10, height: 10 }}>
+              <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+            </svg>
+            {deadlineDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
           </span>
         )}
       </div>
