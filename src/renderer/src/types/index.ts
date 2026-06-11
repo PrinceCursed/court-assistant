@@ -227,7 +227,7 @@ export interface Settings {
   stampOffsetX?: number       // px from right edge, default 60
   stampOffsetY?: number       // px from bottom edge, default 60
   stampScale?: number         // px width/height, default 120
-  theme?: 'dark' | 'light'
+  theme?: 'dark' | 'light' | 'gta5rp' | 'cursed'
 }
 
 export type View =

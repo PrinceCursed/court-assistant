@@ -203,14 +203,19 @@ export default function Settings() {
             <SectionCard>
               <SectionTitle>Оформление</SectionTitle>
               <Field label="Тема интерфейса">
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {(['dark', 'light'] as const).map(t => {
-                    const active = (form.theme ?? 'dark') === t
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {([
+                    { id: 'dark',   label: '🌙 Тёмная' },
+                    { id: 'light',  label: '☀️ Светлая' },
+                    { id: 'gta5rp', label: '🏛 GTA5RP' },
+                    { id: 'cursed', label: '🩸 Cursed' },
+                  ] as const).map(t => {
+                    const active = (form.theme ?? 'dark') === t.id
                     return (
                       <button
-                        key={t}
+                        key={t.id}
                         type="button"
-                        onClick={() => setForm(p => ({ ...p, theme: t }))}
+                        onClick={() => setForm(p => ({ ...p, theme: t.id }))}
                         style={{
                           padding: '7px 18px',
                           border: `1px solid ${active ? 'var(--ac)' : 'var(--line-2)'}`,
@@ -221,7 +226,7 @@ export default function Settings() {
                           transition: 'all 120ms',
                         }}
                       >
-                        {t === 'dark' ? '🌙 Тёмная' : '☀️ Светлая'}
+                        {t.label}
                       </button>
                     )
                   })}

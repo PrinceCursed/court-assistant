@@ -1097,6 +1097,166 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
   background: var(--bg-2);
 }
 
+/* Light theme: gold accent darkened for contrast on bright surfaces */
+[data-theme="light"] {
+  --ac:        #a8731c;
+  --ac2:       #8a5d10;
+  --ac-bg:     rgba(168,115,28,0.10);
+  --ac-border: rgba(168,115,28,0.45);
+  --ac-glow:   rgba(168,115,28,0.18);
+  --sh-ac: 0 4px 16px rgba(168,115,28,0.25);
+}
+
+/* ═══════════════════════════════════════════════════════
+   DARK THEME (neutral graphite + steel-blue accent)
+   :root holds the GTA5RP warm-gold palette, so "dark"
+   overrides everything to a cool neutral.
+═══════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg-0:   #0a0b0d;
+  --bg-1:   #101114;
+  --bg-2:   #16181c;
+  --bg-3:   #1d2025;
+  --bg-4:   #252830;
+
+  --line-0: rgba(255,255,255,0.04);
+  --line-1: rgba(255,255,255,0.07);
+  --line-2: rgba(255,255,255,0.11);
+  --line-3: rgba(255,255,255,0.18);
+  --line-4: rgba(255,255,255,0.28);
+
+  --t1: #f2f4f8;
+  --t2: #b6bcc8;
+  --t3: #767e8c;
+  --t4: #3e434e;
+
+  --ac:        #5b9cf6;
+  --ac2:       #82b4f9;
+  --ac-bg:     rgba(91,156,246,0.12);
+  --ac-border: rgba(91,156,246,0.35);
+  --ac-glow:   rgba(91,156,246,0.20);
+
+  --sh-ac: 0 4px 20px rgba(91,156,246,0.30);
+}
+
+/* ═══════════════════════════════════════════════════════
+   GTA5RP THEME (explicit alias of :root warm-gold palette)
+═══════════════════════════════════════════════════════ */
+[data-theme="gta5rp"] {
+  /* Inherits :root — the warm-dark + gold default. Block kept
+     so the attribute is valid and future overrides have a home. */
+  --ac: #dfa03f;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CURSED THEME (pure black + blood red — Tokyo Ghoul vibes)
+═══════════════════════════════════════════════════════ */
+[data-theme="cursed"] {
+  --bg-0:   #050505;
+  --bg-1:   #0a0a0b;
+  --bg-2:   #101011;
+  --bg-3:   #161617;
+  --bg-4:   #1d1d1f;
+
+  /* red-tinted hairlines */
+  --line-0: rgba(255,40,60,0.05);
+  --line-1: rgba(255,40,60,0.09);
+  --line-2: rgba(255,40,60,0.14);
+  --line-3: rgba(255,40,60,0.22);
+  --line-4: rgba(255,40,60,0.32);
+
+  /* bone-white text, ash greys */
+  --t1: #f0eded;
+  --t2: #b3aaac;
+  --t3: #6e6568;
+  --t4: #383335;
+
+  /* blood red accent */
+  --ac:        #e11d2e;
+  --ac2:       #ff4757;
+  --ac-bg:     rgba(225,29,46,0.13);
+  --ac-border: rgba(225,29,46,0.45);
+  --ac-glow:   rgba(225,29,46,0.28);
+
+  /* deeper shadows + red glow */
+  --sh1: 0 1px 2px rgba(0,0,0,0.6);
+  --sh2: 0 2px 8px rgba(0,0,0,0.7);
+  --sh3: 0 6px 20px rgba(0,0,0,0.75);
+  --sh4: 0 12px 40px rgba(0,0,0,0.85);
+  --sh-ac: 0 4px 24px rgba(225,29,46,0.45);
+
+  /* semantic red shifts toward accent */
+  --red:    #ff4757;
+  --red-bg: rgba(255,71,87,0.10);
+}
+
+[data-theme="cursed"] html,
+[data-theme="cursed"] body,
+[data-theme="cursed"] #root {
+  background: var(--bg-0);
+  color: var(--t1);
+}
+
+[data-theme="cursed"] ::selection {
+  background: rgba(225,29,46,0.4);
+  color: #fff;
+}
+
+[data-theme="cursed"] ::-webkit-scrollbar-thumb {
+  background: rgba(225,29,46,0.25);
+}
+[data-theme="cursed"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(225,29,46,0.45);
+}
+
+[data-theme="cursed"] .titlebar {
+  background: rgba(5,5,5,0.92);
+  border-bottom-color: rgba(255,40,60,0.12);
+}
+
+[data-theme="cursed"] .sidebar {
+  background: var(--bg-0);
+  border-right-color: rgba(255,40,60,0.10);
+}
+
+[data-theme="cursed"] .btn-primary {
+  background: var(--ac);
+  color: #fff;
+  box-shadow: 0 1px 12px rgba(225,29,46,0.35);
+}
+
+[data-theme="cursed"] .case-card:hover {
+  border-color: var(--ac-border);
+  box-shadow: 0 4px 24px rgba(225,29,46,0.18);
+}
+
+/* Logo chip: near-black with blood glow; the lily SVG sits inside */
+[data-theme="cursed"] .titlebar-logo {
+  background: linear-gradient(135deg, #170406 0%, #3a0a10 100%);
+  box-shadow: 0 1px 10px rgba(225,29,46,0.55), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+[data-theme="cursed"] .titlebar-logo svg {
+  width: 16px; height: 16px;
+}
+
+/* Giant faint spider lily watermark in the work area */
+[data-theme="cursed"] .main-area {
+  position: relative;
+}
+[data-theme="cursed"] .main-area::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  bottom: -70px;
+  width: 460px;
+  height: 460px;
+  pointer-events: none;
+  opacity: 0.045;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff2030' stroke-width='0.7' stroke-linecap='round'><path d='M12 22.5v-8'/><path d='M12 15c-1.6-2-4.2-2.4-6.5-1.2 1-2.6 3.6-3.6 6.5-2.8'/><path d='M12 15c1.6-2 4.2-2.4 6.5-1.2-1-2.6-3.6-3.6-6.5-2.8'/><path d='M12 14.5c-2-1-3-3.2-2.5-5.7 1.8.9 2.8 2.9 2.5 5.4'/><path d='M12 14.5c2-1 3-3.2 2.5-5.7-1.8.9-2.8 2.9-2.5 5.4'/><path d='M12 13.5C9.2 10.5 7.8 7.6 7.4 4.8'/><path d='M12 13.5c-.8-3.6-.4-6.6.2-8.8'/><path d='M12 13.5c2.8-3 4.2-5.9 4.6-8.7'/><path d='M12 13.5C10 9.8 6.4 7.6 3.2 7'/><path d='M12 13.5c2-3.7 5.6-5.9 8.8-6.5'/><circle cx='7.4' cy='4.8' r='.8' fill='%23ff2030' stroke='none'/><circle cx='12.2' cy='4.7' r='.8' fill='%23ff2030' stroke='none'/><circle cx='16.6' cy='4.8' r='.8' fill='%23ff2030' stroke='none'/><circle cx='3.2' cy='7' r='.8' fill='%23ff2030' stroke='none'/><circle cx='20.8' cy='7' r='.8' fill='%23ff2030' stroke='none'/></svg>");
+}
+
 /* ═══════════════════════════════════════════════════════
    ANIMATIONS
 ═══════════════════════════════════════════════════════ */
