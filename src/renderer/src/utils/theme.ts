@@ -1,3 +1,8 @@
+/** Perceived luminance 0..1 (sRGB weighted). */
+function luminance(r: number, g: number, b: number): number {
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+}
+
 /** Apply custom theme CSS custom properties directly on <html> inline style.
  *  Inline styles always win over stylesheet rules, so any [data-theme="custom"]
  *  block in CSS is just a fallback baseline; these JS vars take full control.
@@ -7,7 +12,11 @@ export function applyCustomThemeCss(
   accR = 200, accG = 150, accB = 50
 ): void {
   const s = document.documentElement.style
-  const add = (v: number, n: number) => Math.min(255, v + n)
+  const lightBg = luminance(bgR, bgG, bgB) > 0.55
+  // On a light background the surface ladder goes DARKER, not lighter,
+  // otherwise bg-1..4 clip to pure white and panels become invisible.
+  const add = (v: number, n: number) =>
+    lightBg ? Math.max(0, v - n) : Math.min(255, v + n)
   const rgb  = (r: number, g: number, b: number) => `rgb(${r},${g},${b})`
   const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r},${g},${b},${a})`
 
@@ -32,17 +41,30 @@ export function applyCustomThemeCss(
   s.setProperty('--border-2', 'var(--line-2)')
   s.setProperty('--border-3', 'var(--line-3)')
 
-  s.setProperty('--t1', '#f0efee')
-  s.setProperty('--t2', '#c4bcb5')
-  s.setProperty('--t3', '#857d74')
-  s.setProperty('--t4', '#4a443e')
+  // Text contrast follows the chosen background: light bg → dark text.
+  if (lightBg) {
+    s.setProperty('--t1', '#16130f')
+    s.setProperty('--t2', '#403a33')
+    s.setProperty('--t3', '#6e665c')
+    s.setProperty('--t4', '#9b9389')
+  } else {
+    s.setProperty('--t1', '#f0efee')
+    s.setProperty('--t2', '#c4bcb5')
+    s.setProperty('--t3', '#857d74')
+    s.setProperty('--t4', '#4a443e')
+  }
   s.setProperty('--text-1',   'var(--t1)')
   s.setProperty('--text-2',   'var(--t2)')
   s.setProperty('--text-3',   'var(--t3)')
   s.setProperty('--text-inv', 'var(--bg-0)')
 
+  // Accent hover shifts away from the accent's own brightness so it stays visible
+  const lightAcc = luminance(accR, accG, accB) > 0.6
+  const acc2 = (v: number) => lightAcc ? Math.max(0, v - 35) : Math.min(255, v + 45)
   s.setProperty('--ac',         rgb(accR, accG, accB))
-  s.setProperty('--ac2',        rgb(add(accR,45), add(accG,45), add(accB,45)))
+  s.setProperty('--ac2',        rgb(acc2(accR), acc2(accG), acc2(accB)))
+  // Text sitting ON accent-coloured elements (primary buttons etc.)
+  s.setProperty('--ac-fg', lightAcc ? '#16130f' : '#ffffff')
   s.setProperty('--ac-bg',      rgba(accR, accG, accB, 0.12))
   s.setProperty('--ac-border',  rgba(accR, accG, accB, 0.35))
   s.setProperty('--ac-glow',    rgba(accR, accG, accB, 0.20))
@@ -53,10 +75,17 @@ export function applyCustomThemeCss(
   s.setProperty('--border-accent',  'var(--ac-border)')
   s.setProperty('--text-accent',    'var(--ac2)')
 
-  s.setProperty('--sh1',   '0 1px 2px rgba(0,0,0,0.4)')
-  s.setProperty('--sh2',   '0 2px 8px rgba(0,0,0,0.5)')
-  s.setProperty('--sh3',   '0 6px 20px rgba(0,0,0,0.55)')
-  s.setProperty('--sh4',   '0 12px 40px rgba(0,0,0,0.65)')
+  if (lightBg) {
+    s.setProperty('--sh1', '0 1px 2px rgba(0,0,0,0.08)')
+    s.setProperty('--sh2', '0 2px 8px rgba(0,0,0,0.10)')
+    s.setProperty('--sh3', '0 6px 20px rgba(0,0,0,0.13)')
+    s.setProperty('--sh4', '0 12px 40px rgba(0,0,0,0.18)')
+  } else {
+    s.setProperty('--sh1', '0 1px 2px rgba(0,0,0,0.4)')
+    s.setProperty('--sh2', '0 2px 8px rgba(0,0,0,0.5)')
+    s.setProperty('--sh3', '0 6px 20px rgba(0,0,0,0.55)')
+    s.setProperty('--sh4', '0 12px 40px rgba(0,0,0,0.65)')
+  }
   s.setProperty('--sh-ac', `0 4px 20px ${rgba(accR, accG, accB, 0.35)}`)
   s.setProperty('--sh-xs',  'var(--sh1)')
   s.setProperty('--sh-sm',  'var(--sh2)')
@@ -71,7 +100,7 @@ const CUSTOM_PROPS = [
   '--line-0','--line-1','--line-2','--line-3','--line-4',
   '--border-0','--border-1','--border-2','--border-3',
   '--t1','--t2','--t3','--t4','--text-1','--text-2','--text-3','--text-inv',
-  '--ac','--ac2','--ac-bg','--ac-border','--ac-glow',
+  '--ac','--ac2','--ac-bg','--ac-border','--ac-glow','--ac-fg',
   '--accent','--accent-hover','--accent-dim','--accent-glow','--border-accent','--text-accent',
   '--sh1','--sh2','--sh3','--sh4','--sh-ac','--sh-xs','--sh-sm','--sh-md','--sh-lg','--sh-acc',
 ]

@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { v4 as uuid } from 'uuid'
 import { useApp } from '../../store/AppContext'
 import { saveStamp } from '../../storage/storage'
-import { ColleagueJudge } from '../../types'
 import { applyCustomThemeCss } from '../../utils/theme'
 
-type SettingsTab = 'profile' | 'stamp' | 'collegial' | 'heraldry' | 'storage' | 'keys' | 'about'
+type SettingsTab = 'profile' | 'stamp' | 'heraldry' | 'storage' | 'keys' | 'about'
 
 const NAV_ITEMS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   {
@@ -15,10 +13,6 @@ const NAV_ITEMS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   {
     id: 'stamp', label: 'Подпись и печать',
     icon: <svg viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 10h5M3.5 7h4M3.5 4.5c0-1.1.9-3 4-3s4 1.9 4 3V7h-8V4.5z"/></svg>
-  },
-  {
-    id: 'collegial', label: 'Коллегия',
-    icon: <svg viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="3.5" cy="3.5" r="1.7"/><circle cx="7.5" cy="3.5" r="1.7"/><path d="M0 10c0-1.8 1.6-3 3.5-3"/><path d="M4.5 10c0-1.8 1.6-3 3.5-3s3.5 1.2 3.5 3"/></svg>
   },
   {
     id: 'heraldry', label: 'Геральдика',
@@ -37,6 +31,81 @@ const NAV_ITEMS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     icon: <svg viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="5.5" cy="5.5" r="5"/><path d="M5.5 4.5v.5M5.5 6.5v2"/></svg>
   },
 ]
+
+// NB: these helpers MUST live at module scope. When they were declared inside
+// Settings(), every keystroke/slider tick recreated the component type, React
+// remounted the subtree, and <input type="range"> lost mouse capture mid-drag —
+// sliders could only be clicked, not dragged.
+const SectionCard = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+  <div style={{
+    background: 'var(--bg-1)', border: '1px solid var(--line-1)',
+    borderRadius: 'var(--r5)', padding: '18px 20px', marginBottom: 12,
+    ...style,
+  }}>
+    {children}
+  </div>
+)
+
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', marginBottom: 14, letterSpacing: '-0.01em' }}>
+    {children}
+  </div>
+)
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div style={{ marginBottom: 13 }}>
+    <label style={{ display: 'block', fontSize: 10.5, fontWeight: 600, color: 'var(--t2)', marginBottom: 4 }}>
+      {label}
+    </label>
+    {children}
+  </div>
+)
+
+const Grid2 = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13 }}>{children}</div>
+)
+
+const UploadBox = ({ value, onUpload, onRemove }: { value?: string; onUpload: () => void; onRemove?: () => void }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+    {value ? (
+      <img src={value} alt="preview" style={{ width: 80, height: 80, objectFit: 'contain', background: '#fff', borderRadius: 8, border: '1px solid var(--line-2)', padding: 4 }} />
+    ) : (
+      <div
+        onClick={onUpload}
+        style={{ width: 80, height: 80, borderRadius: 8, border: '1.5px dashed var(--line-2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, color: 'var(--t3)', cursor: 'pointer', transition: 'all 160ms', background: 'var(--bg-1)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ac)'; (e.currentTarget as HTMLElement).style.color = 'var(--ac2)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--line-2)'; (e.currentTarget as HTMLElement).style.color = 'var(--t3)' }}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><path d="M10 4v8M6 8l4-4 4 4"/><path d="M3 14v1a2 2 0 002 2h10a2 2 0 002-2v-1"/></svg>
+        <span style={{ fontSize: 9.5, fontWeight: 600 }}>Загрузить</span>
+      </div>
+    )}
+    <button className="btn btn-secondary btn-sm" onClick={onUpload} style={{ width: 80 }}>
+      {value ? 'Заменить' : 'Загрузить'}
+    </button>
+    {value && onRemove && (
+      <button className="btn btn-ghost btn-sm" onClick={onRemove} style={{ width: 80, color: 'var(--red)' }}>
+        Удалить
+      </button>
+    )}
+  </div>
+)
+
+const Slider = ({ label, min, max, step = 4, value, onChange }: {
+  label: string; min: number; max: number; step?: number; value: number; onChange: (v: number) => void
+}) => (
+  <Field label={label}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <input
+        type="range" min={min} max={max} step={step}
+        value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        style={{ flex: 1, accentColor: 'var(--ac)' }}
+      />
+      <span style={{ fontSize: 12, color: 'var(--t1)', minWidth: 32, textAlign: 'right', fontFamily: 'var(--fm)' }}>{value}</span>
+    </div>
+  </Field>
+)
 
 const HOTKEYS = [
   ['Ctrl+N',         'Создать новый иск'],
@@ -98,28 +167,6 @@ export default function Settings() {
     }
   }
 
-  // ── Collegial judges helpers ──
-  const addColleague = () => {
-    const j: ColleagueJudge = { id: uuid(), firstName: '', lastName: '', position: 'Окружной судья' }
-    setForm(p => ({ ...p, colleagueJudges: [...(p.colleagueJudges || []), j] }))
-  }
-  const removeColleague = (i: number) => {
-    setForm(p => ({ ...p, colleagueJudges: (p.colleagueJudges || []).filter((_, idx) => idx !== i) }))
-  }
-  const updateColleague = (i: number, key: keyof ColleagueJudge, value: string | undefined) => {
-    setForm(p => {
-      const list = [...(p.colleagueJudges || [])]
-      list[i] = { ...list[i], [key]: value }
-      return { ...p, colleagueJudges: list }
-    })
-  }
-  const handleColleagueStamp = async (i: number) => {
-    const path = await window.api.selectFile([{ name: 'Изображения', extensions: ['png','jpg','jpeg','gif','webp'] }])
-    if (!path) return
-    const base64 = await window.api.readBinary(path)
-    if (base64) updateColleague(i, 'stampBase64', base64)
-  }
-
   // Real-time custom theme preview (no Save needed for live color changes)
   useEffect(() => {
     if ((form.theme ?? 'dark') !== 'custom') return
@@ -128,77 +175,6 @@ export default function Settings() {
       form.customAccR ?? 200, form.customAccG ?? 150, form.customAccB ?? 50
     )
   }, [form.theme, form.customBgR, form.customBgG, form.customBgB, form.customAccR, form.customAccG, form.customAccB])
-
-  const SectionCard = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
-    <div style={{
-      background: 'var(--bg-1)', border: '1px solid var(--line-1)',
-      borderRadius: 'var(--r5)', padding: '18px 20px', marginBottom: 12,
-      ...style,
-    }}>
-      {children}
-    </div>
-  )
-
-  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', marginBottom: 14, letterSpacing: '-0.01em' }}>
-      {children}
-    </div>
-  )
-
-  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div style={{ marginBottom: 13 }}>
-      <label style={{ display: 'block', fontSize: 10.5, fontWeight: 600, color: 'var(--t2)', marginBottom: 4 }}>
-        {label}
-      </label>
-      {children}
-    </div>
-  )
-
-  const Grid2 = ({ children }: { children: React.ReactNode }) => (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13 }}>{children}</div>
-  )
-
-  const UploadBox = ({ value, onUpload, onRemove }: { value?: string; onUpload: () => void; onRemove?: () => void }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-      {value ? (
-        <img src={value} alt="preview" style={{ width: 80, height: 80, objectFit: 'contain', background: '#fff', borderRadius: 8, border: '1px solid var(--line-2)', padding: 4 }} />
-      ) : (
-        <div
-          onClick={onUpload}
-          style={{ width: 80, height: 80, borderRadius: 8, border: '1.5px dashed var(--line-2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, color: 'var(--t3)', cursor: 'pointer', transition: 'all 160ms', background: 'var(--bg-1)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ac)'; (e.currentTarget as HTMLElement).style.color = 'var(--ac2)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--line-2)'; (e.currentTarget as HTMLElement).style.color = 'var(--t3)' }}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><path d="M10 4v8M6 8l4-4 4 4"/><path d="M3 14v1a2 2 0 002 2h10a2 2 0 002-2v-1"/></svg>
-          <span style={{ fontSize: 9.5, fontWeight: 600 }}>Загрузить</span>
-        </div>
-      )}
-      <button className="btn btn-secondary btn-sm" onClick={onUpload} style={{ width: 80 }}>
-        {value ? 'Заменить' : 'Загрузить'}
-      </button>
-      {value && onRemove && (
-        <button className="btn btn-ghost btn-sm" onClick={onRemove} style={{ width: 80, color: 'var(--red)' }}>
-          Удалить
-        </button>
-      )}
-    </div>
-  )
-
-  const Slider = ({ label, min, max, step = 4, value, onChange }: {
-    label: string; min: number; max: number; step?: number; value: number; onChange: (v: number) => void
-  }) => (
-    <Field label={label}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <input
-          type="range" min={min} max={max} step={step}
-          value={value}
-          onChange={e => onChange(Number(e.target.value))}
-          style={{ flex: 1, accentColor: 'var(--ac)' }}
-        />
-        <span style={{ fontSize: 12, color: 'var(--t1)', minWidth: 32, textAlign: 'right', fontFamily: 'var(--fm)' }}>{value}</span>
-      </div>
-    </Field>
-  )
 
   const renderTab = () => {
     switch (tab) {
@@ -236,6 +212,9 @@ export default function Settings() {
               <Field label="Должность (отображается в документах)">
                 <input className="input" value={form.position} onChange={ff('position')} placeholder="Окружной судья" />
               </Field>
+              <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.55 }}>
+                Коллегиальный состав теперь настраивается в самом деле: вкладка «Участники» → добавить участника с ролью «Судья». Такие судьи подписывают документы только этого дела.
+              </div>
             </SectionCard>
 
             <SectionCard>
@@ -373,75 +352,6 @@ export default function Settings() {
             </SectionCard>
           </>
         )
-
-      case 'collegial': {
-        const colleagues = form.colleagueJudges || []
-        return (
-          <>
-            <SectionCard>
-              <SectionTitle>Коллегиальный состав</SectionTitle>
-              <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 14, lineHeight: 1.6 }}>
-                Судьи коллегии автоматически отображаются в блоке подписей всех документов. У каждого можно загрузить свою печать.
-              </div>
-
-              {/* Main judge preview */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--ac-bg)', borderRadius: 'var(--r3)', border: '1px solid var(--ac-border)', marginBottom: 14 }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--ac2)" strokeWidth="1.7" strokeLinecap="round"><circle cx="7" cy="4" r="2.5"/><path d="M1.5 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
-                <div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--t1)' }}>
-                    {[settings.judgeFirstName, settings.judgeLastName].filter(Boolean).join(' ') || 'Судья'} — основной
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--t3)' }}>{settings.position || 'Должность не указана'}</div>
-                </div>
-              </div>
-
-              {colleagues.map((j, i) => (
-                <div key={j.id} style={{ background: 'var(--bg-2)', border: '1px solid var(--line-1)', borderRadius: 'var(--r3)', padding: '14px 16px', marginBottom: 10 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--t1)' }}>Судья {i + 1}</div>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => removeColleague(i)}
-                      style={{ color: 'var(--red)', padding: '3px 8px' }}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg>
-                      Удалить
-                    </button>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                    <Field label="Имя">
-                      <input className="input" value={j.firstName} onChange={e => updateColleague(i, 'firstName', e.target.value)} placeholder="Имя" />
-                    </Field>
-                    <Field label="Фамилия">
-                      <input className="input" value={j.lastName} onChange={e => updateColleague(i, 'lastName', e.target.value)} placeholder="Фамилия" />
-                    </Field>
-                  </div>
-                  <Field label="Должность">
-                    <input className="input" value={j.position} onChange={e => updateColleague(i, 'position', e.target.value)} placeholder="Окружной судья" />
-                  </Field>
-                  <div style={{ marginTop: 12 }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--t2)', marginBottom: 8 }}>Печать</div>
-                    <UploadBox
-                      value={j.stampBase64}
-                      onUpload={() => handleColleagueStamp(i)}
-                      onRemove={() => updateColleague(i, 'stampBase64', undefined)}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              <button
-                className="btn btn-secondary"
-                onClick={addColleague}
-                style={{ width: '100%', marginTop: 4, justifyContent: 'center' }}
-              >
-                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5.5 1v9M1 5.5h9"/></svg>
-                Добавить судью
-              </button>
-            </SectionCard>
-          </>
-        )
-      }
 
       case 'heraldry':
         return (
@@ -591,10 +501,10 @@ export default function Settings() {
               <SectionTitle>Что нового в v{appVersion}</SectionTitle>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
-                  ['Полноценный редактор — шрифты, размер, цвет текста, выделение, индексы', 'var(--ac)'],
-                  ['Исправлен баг со сменой шрифта при вставке текста из Word/браузера', 'var(--green)'],
-                  ['Горячая клавиша Ctrl+\\ для сброса форматирования', 'var(--amber)'],
-                  ['Имя судьи в боковом меню теперь берётся из настроек', 'var(--t2)'],
+                  ['Коллегия перенесена в дело: судья-участник подписывает документы только этого дела', 'var(--ac)'],
+                  ['Тема Cursed: настоящая паучья лилия в логотипе и на фоне', 'var(--red)'],
+                  ['Тема «Своя»: ползунки теперь перетаскиваются, текст автоматически контрастный', 'var(--green)'],
+                  ['Парсер исков: имя из текста иска вместо ника форумного аккаунта', 'var(--amber)'],
                 ].map(([text, color]) => (
                   <div key={text as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: color as string, marginTop: 5, flexShrink: 0 }} />

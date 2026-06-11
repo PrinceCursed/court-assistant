@@ -306,10 +306,15 @@ export default function DocumentPreview({ content, case_: c, settings, docTitle,
   const judgeName     = `${settings.judgeFirstName} ${settings.judgeLastName}`.trim() || 'Судья'
   const judgePosition = settings.position || 'Судья Окружного суда'
 
-  // All judges for the signature block: main + colleagues
+  // All judges for the signature block: main judge (settings) + collegium
+  // judges added as participants of THIS case (role 'judge'). The collegium
+  // is per-case — judges of one case never leak into documents of another.
+  const collegiumJudges = c.participants
+    .filter(p => p.role === 'judge')
+    .filter(p => `${p.firstName} ${p.lastName}`.trim() !== judgeName) // не дублируем основного судью
   const allJudges = [
     { name: judgeName, position: judgePosition, stamp: appSettings.stampBase64, offsetX: stampOffsetX, offsetY: stampOffsetY, scale: stampScale },
-    ...(appSettings.colleagueJudges || []).map(j => ({
+    ...collegiumJudges.map(j => ({
       name: `${j.firstName} ${j.lastName}`.trim() || 'Судья',
       position: j.position || 'Окружной судья',
       stamp: j.stampBase64,

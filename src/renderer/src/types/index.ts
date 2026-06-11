@@ -162,6 +162,8 @@ export interface Participant {
   documentId?: string
   position?: string
   comment?: string
+  /** Печать судьи — для участников с ролью 'judge'; подставляется в блок подписей документов этого дела */
+  stampBase64?: string
 }
 
 export interface Note {
@@ -213,6 +215,7 @@ export interface Case {
   deadline?: string   // ISO date "YYYY-MM-DD"
 }
 
+/** @deprecated Коллегия переехала в участников дела (роль 'judge'). Поле в Settings оставлено, чтобы старые settings.json читались без ошибок. */
 export interface ColleagueJudge {
   id: string
   firstName: string

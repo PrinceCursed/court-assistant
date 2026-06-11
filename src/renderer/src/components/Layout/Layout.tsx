@@ -2,6 +2,7 @@ import React from 'react'
 import Sidebar from '../Sidebar/Sidebar'
 import RightPanel from '../RightPanel/RightPanel'
 import { useApp } from '../../store/AppContext'
+import lilyLogo from '../../assets/lily_logo.png'
 
 interface Props { children: React.ReactNode }
 
@@ -21,29 +22,15 @@ export default function Layout({ children }: Props) {
   )
 }
 
-/** Red spider lily (higanbana) — logo for the cursed theme */
+/** Red spider lily (higanbana) photo — logo for the cursed theme */
 function LilyIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#ff4757" strokeWidth="1.2" strokeLinecap="round">
-      {/* stem */}
-      <path d="M12 22.5v-8" />
-      {/* curled petals */}
-      <path d="M12 15c-1.6-2-4.2-2.4-6.5-1.2 1-2.6 3.6-3.6 6.5-2.8" />
-      <path d="M12 15c1.6-2 4.2-2.4 6.5-1.2-1-2.6-3.6-3.6-6.5-2.8" />
-      <path d="M12 14.5c-2-1-3-3.2-2.5-5.7 1.8.9 2.8 2.9 2.5 5.4" />
-      <path d="M12 14.5c2-1 3-3.2 2.5-5.7-1.8.9-2.8 2.9-2.5 5.4" />
-      {/* spidery stamens */}
-      <path d="M12 13.5C9.2 10.5 7.8 7.6 7.4 4.8" />
-      <path d="M12 13.5c-.8-3.6-.4-6.6.2-8.8" />
-      <path d="M12 13.5c2.8-3 4.2-5.9 4.6-8.7" />
-      <path d="M12 13.5C10 9.8 6.4 7.6 3.2 7" />
-      <path d="M12 13.5c2-3.7 5.6-5.9 8.8-6.5" />
-      <circle cx="7.4" cy="4.8" r=".8" fill="#ff4757" stroke="none" />
-      <circle cx="12.2" cy="4.7" r=".8" fill="#ff4757" stroke="none" />
-      <circle cx="16.6" cy="4.8" r=".8" fill="#ff4757" stroke="none" />
-      <circle cx="3.2" cy="7" r=".8" fill="#ff4757" stroke="none" />
-      <circle cx="20.8" cy="7" r=".8" fill="#ff4757" stroke="none" />
-    </svg>
+    <img
+      src={lilyLogo}
+      alt=""
+      style={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }}
+      draggable={false}
+    />
   )
 }
 

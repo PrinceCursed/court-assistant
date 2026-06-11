@@ -108,8 +108,15 @@ export default function Participants({ case_: c }: Props) {
   }
 
   const openEdit = (p: Participant) => {
-    setForm({ role: p.role, firstName: p.firstName, lastName: p.lastName, documentId: p.documentId || '', position: p.position || '', comment: p.comment || '' })
+    setForm({ role: p.role, firstName: p.firstName, lastName: p.lastName, documentId: p.documentId || '', position: p.position || '', comment: p.comment || '', stampBase64: p.stampBase64 })
     setEditP(p)
+  }
+
+  const handleStampUpload = async () => {
+    const path = await window.api.selectFile([{ name: 'Изображения', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'] }])
+    if (!path) return
+    const base64 = await window.api.readBinary(path)
+    if (base64) setForm(p => ({ ...p, stampBase64: base64 }))
   }
 
   const handleAdd = async () => {
@@ -170,6 +177,27 @@ export default function Participants({ case_: c }: Props) {
         <label className="input-label">Комментарий</label>
         <textarea className="textarea" value={form.comment} onChange={ff('comment')} placeholder="Дополнительная информация..." rows={2} />
       </div>
+      {form.role === 'judge' && (
+        <div className="input-group">
+          <label className="input-label">Печать судьи</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {form.stampBase64 && (
+              <img src={form.stampBase64} alt="Печать" style={{ width: 56, height: 56, objectFit: 'contain', background: '#fff', borderRadius: 8, border: '1px solid var(--border-1)', padding: 3 }} />
+            )}
+            <button type="button" className="btn btn-secondary btn-sm" onClick={handleStampUpload}>
+              {form.stampBase64 ? 'Заменить' : 'Загрузить печать'}
+            </button>
+            {form.stampBase64 && (
+              <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--red)' }} onClick={() => setForm(p => ({ ...p, stampBase64: undefined }))}>
+                Удалить
+              </button>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.5 }}>
+            Судья-участник попадает в блок подписей всех документов этого дела (коллегиальный состав). На другие дела не влияет.
+          </div>
+        </div>
+      )}
     </>
   )
 
