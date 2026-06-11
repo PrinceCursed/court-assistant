@@ -89,7 +89,7 @@ function parseLabeledLines(lines: string[], extracted: ParsedCase): void {
     for (const { field, include } of FIELD_KEYWORDS) {
       if (extracted[field]) continue
       if (include.test(label)) {
-        extracted[field] = value
+        extracted[field] = field === 'defendant' ? extractDefendantValue(value) : value
         break
       }
     }
@@ -123,15 +123,20 @@ function extractName(phrase: string): string | undefined {
   return undefined
 }
 
-/** Cleans a captured defendant phrase: trims case endings noise, length-caps. */
-function cleanParty(s: string): string {
-  return s
+/**
+ * From a defendant phrase, extract either the badge [content] or just the name.
+ * Badge takes priority: "сотрудника FIB c нашивкой [FIB|IAA|№137|K.R.]" → "[FIB|IAA|№137|K.R.]"
+ * Plain civilian: "гражданина John Smith" → "John Smith"
+ */
+function extractDefendantValue(phrase: string): string {
+  const badgeMatch = phrase.match(/\[([^\]]{2,80})\]/)
+  if (badgeMatch) return `[${badgeMatch[1].trim()}]`
+  const name = extractName(phrase)
+  if (name) return name
+  return phrase
+    .replace(/^(сотрудника?|сотрудниц[аы]|гражданина?|гражданки)\s+/i, '')
     .trim()
-    .replace(/^(гражданина|гражданки|гражданина\s+США|сотрудника|сотрудницы)\s+/i, (m) =>
-      m.replace(/а\s+$/, ' ').replace(/ки\s+$/, 'ка ').replace(/цы\s+$/, 'ца '))
-    .replace(/\s{2,}/g, ' ')
-    .slice(0, 120)
-    .trim()
+    .slice(0, 80)
 }
 
 function parseNarrative(text: string, extracted: ParsedCase): void {
@@ -164,14 +169,14 @@ function parseNarrative(text: string, extracted: ParsedCase): void {
       /(?:исковое\s+заявление|заявление|иск|жалоб[а-яё]*)[^\n]{0,160}?\s(?:на|против|в\s+отношении)\s+([^\n]{3,140}?)(?=\s*,\s*(?:объясня|в\s+связи|так\s+как|поскольку|прошу|указыва|прилага)|[.;](?=\s)|\s*$)/im
     )
     if (m) {
-      extracted.defendant = cleanParty(m[1])
+      extracted.defendant = extractDefendantValue(m[1])
     }
   }
   if (!extracted.defendant) {
     // Badge-only fallback: "сотрудника FIB c нашивкой [FIB | IAA | №137 | K.R.]"
-    const badge = text.match(/сотрудни[а-яё]+\s+([A-ZА-ЯЁ]{2,10})\s*[cс]?\s*нашивк[а-яё]*\s*\[?([^\]\n]{2,60})\]?/i)
+    const badge = text.match(/сотрудни[а-яё]+\s+([A-ZА-ЯЁ]{2,10})\s*[cс]?\s*нашивк[а-яё]*\s*\[([^\]\n]{2,60})\]/i)
     if (badge) {
-      extracted.defendant = `Сотрудник ${badge[1]} [${badge[2].trim()}]`.slice(0, 120)
+      extracted.defendant = `[${badge[2].trim()}]`
     }
   }
 
@@ -194,8 +199,10 @@ export function parseCaseText(text: string): ParsedCase {
   const extracted: ParsedCase = {}
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
 
-  parseLabeledLines(lines, extracted)
+  // Narrative runs first — picks up in-character names ("От гражданина Coby Moore")
+  // before labeled lines can grab a forum account name from "Истец: forum_nick"
   parseNarrative(text, extracted)
+  parseLabeledLines(lines, extracted)
 
   return extracted
 }
