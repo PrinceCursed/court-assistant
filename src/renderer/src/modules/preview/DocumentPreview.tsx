@@ -306,18 +306,28 @@ export default function DocumentPreview({ content, case_: c, settings, docTitle,
   const judgeName     = `${settings.judgeFirstName} ${settings.judgeLastName}`.trim() || 'Судья'
   const judgePosition = settings.position || 'Судья Окружного суда'
 
-  // Debounced pagination — reruns 350 ms after last content/size change.
-  // stripTokensForPreview() is called here so that:
-  //   1. Measurement is based on plain text (accurate heights)
-  //   2. Rendered pages contain no editor UI chrome (colours, borders, arrows)
-  //   3. JPEG export inherits the same clean output automatically
+  // All judges for the signature block: main + colleagues
+  const allJudges = [
+    { name: judgeName, position: judgePosition, stamp: appSettings.stampBase64, offsetX: stampOffsetX, offsetY: stampOffsetY, scale: stampScale },
+    ...(appSettings.colleagueJudges || []).map(j => ({
+      name: `${j.firstName} ${j.lastName}`.trim() || 'Судья',
+      position: j.position || 'Окружной судья',
+      stamp: j.stampBase64,
+      offsetX: 0, offsetY: 0, scale: stampScale,
+    })),
+  ]
+
   useEffect(() => {
     const logoReserved = heraldrySize + 28
+    // Extra height when colleagues wrap to a second row (>2 judges side by side)
+    const sigReserved = allJudges.length <= 2
+      ? SIGNATURE_RESERVED
+      : SIGNATURE_RESERVED + Math.ceil((allJudges.length - 2) / 2) * 90
     const timer = setTimeout(() => {
-      setPages(paginateHtml(stripTokensForPreview(content), logoReserved, SIGNATURE_RESERVED))
+      setPages(paginateHtml(stripTokensForPreview(content), logoReserved, sigReserved))
     }, 350)
     return () => clearTimeout(timer)
-  }, [content, heraldrySize])
+  }, [content, heraldrySize, allJudges.length])
 
   // JPEG export — one file per page
   const exportJpeg = useCallback(async () => {
@@ -420,52 +430,40 @@ export default function DocumentPreview({ content, case_: c, settings, docTitle,
                   right: 50,
                   display: 'flex',
                   alignItems: 'flex-end',
-                  justifyContent: 'space-between',
+                  justifyContent: allJudges.length === 1 ? 'space-between' : 'flex-start',
+                  gap: 40,
+                  flexWrap: 'wrap',
                 }}>
-                  {/* Left: three-line text signature */}
-                  <div>
-                    <div style={{
-                      fontSize: 12,
-                      color: '#000',
-                      fontFamily: "'Times New Roman', Georgia, serif",
-                      marginBottom: 5,
-                    }}>
-                      {judgePosition}
+                  {allJudges.map((j, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 12, color: '#000', fontFamily: "'Times New Roman', Georgia, serif", marginBottom: 5 }}>
+                          {j.position}
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#000', marginBottom: 6 }}>
+                          {j.name}
+                        </div>
+                        <div style={{ fontFamily: "'Dancing Script', cursive", fontSize: 36, color: '#000', lineHeight: 1.1 }}>
+                          {j.name}
+                        </div>
+                      </div>
+                      {j.stamp && (
+                        <img
+                          src={j.stamp}
+                          alt="Печать"
+                          style={{
+                            width: j.scale,
+                            height: j.scale,
+                            objectFit: 'contain',
+                            flexShrink: 0,
+                            marginLeft: 8,
+                            marginBottom: i === 0 ? j.offsetY : 0,
+                            marginRight: i === 0 ? j.offsetX : 0,
+                          }}
+                        />
+                      )}
                     </div>
-                    <div style={{
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: '#000',
-                      marginBottom: 6,
-                    }}>
-                      {judgeName}
-                    </div>
-                    <div style={{
-                      fontFamily: "'Dancing Script', cursive",
-                      fontSize: 36,
-                      color: '#000',
-                      lineHeight: 1.1,
-                    }}>
-                      {judgeName}
-                    </div>
-                  </div>
-
-                  {/* Right: stamp image */}
-                  {settings.stampBase64 && (
-                    <img
-                      src={settings.stampBase64}
-                      alt="Печать"
-                      style={{
-                        width: stampScale,
-                        height: stampScale,
-                        objectFit: 'contain',
-                        flexShrink: 0,
-                        marginLeft: 24,
-                        marginBottom: stampOffsetY,
-                        marginRight: stampOffsetX,
-                      }}
-                    />
-                  )}
+                  ))}
                 </div>
               )}
 

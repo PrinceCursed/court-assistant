@@ -6,6 +6,7 @@ import {
   loadSettings, saveSettings as storageSaveSettings,
   archiveCase, resetStorageCache, formatDateForTimeline
 } from '../storage/storage'
+import { applyCustomThemeCss, clearCustomThemeCss } from '../utils/theme'
 
 interface Ctx {
   cases: Case[]
@@ -43,8 +44,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ;(async () => {
       const s = await loadSettings()
       setSettings(s)
-      // Apply saved theme immediately
       document.documentElement.setAttribute('data-theme', s.theme ?? 'dark')
+      if (s.theme === 'custom') {
+        applyCustomThemeCss(s.customBgR??20, s.customBgG??20, s.customBgB??30, s.customAccR??200, s.customAccG??150, s.customAccB??50)
+      }
       if (!s.storagePath) {
         const dataPath = await window.api.getDataPath()
         const defaultPath = dataPath + '/CourtAssistant'
@@ -197,6 +200,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSettings(updated)
     if (patch.theme) {
       document.documentElement.setAttribute('data-theme', patch.theme)
+      if (patch.theme !== 'custom') clearCustomThemeCss()
+    }
+    const effectiveTheme = patch.theme ?? updated.theme
+    if (effectiveTheme === 'custom') {
+      applyCustomThemeCss(updated.customBgR??20, updated.customBgG??20, updated.customBgB??30, updated.customAccR??200, updated.customAccG??150, updated.customAccB??50)
     }
     if (patch.storagePath && patch.storagePath !== settings.storagePath) {
       resetStorageCache()

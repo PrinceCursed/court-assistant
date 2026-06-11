@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { v4 as uuid } from 'uuid'
 import { useApp } from '../../store/AppContext'
 import { saveStamp } from '../../storage/storage'
+import { ColleagueJudge } from '../../types'
+import { applyCustomThemeCss } from '../../utils/theme'
 
-type SettingsTab = 'profile' | 'stamp' | 'heraldry' | 'storage' | 'keys' | 'about'
+type SettingsTab = 'profile' | 'stamp' | 'collegial' | 'heraldry' | 'storage' | 'keys' | 'about'
 
 const NAV_ITEMS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   {
@@ -12,6 +15,10 @@ const NAV_ITEMS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   {
     id: 'stamp', label: 'Подпись и печать',
     icon: <svg viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 10h5M3.5 7h4M3.5 4.5c0-1.1.9-3 4-3s4 1.9 4 3V7h-8V4.5z"/></svg>
+  },
+  {
+    id: 'collegial', label: 'Коллегия',
+    icon: <svg viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="3.5" cy="3.5" r="1.7"/><circle cx="7.5" cy="3.5" r="1.7"/><path d="M0 10c0-1.8 1.6-3 3.5-3"/><path d="M4.5 10c0-1.8 1.6-3 3.5-3s3.5 1.2 3.5 3"/></svg>
   },
   {
     id: 'heraldry', label: 'Геральдика',
@@ -90,6 +97,37 @@ export default function Settings() {
       if (base64) setForm(p => ({ ...p, [field]: base64 }))
     }
   }
+
+  // ── Collegial judges helpers ──
+  const addColleague = () => {
+    const j: ColleagueJudge = { id: uuid(), firstName: '', lastName: '', position: 'Окружной судья' }
+    setForm(p => ({ ...p, colleagueJudges: [...(p.colleagueJudges || []), j] }))
+  }
+  const removeColleague = (i: number) => {
+    setForm(p => ({ ...p, colleagueJudges: (p.colleagueJudges || []).filter((_, idx) => idx !== i) }))
+  }
+  const updateColleague = (i: number, key: keyof ColleagueJudge, value: string | undefined) => {
+    setForm(p => {
+      const list = [...(p.colleagueJudges || [])]
+      list[i] = { ...list[i], [key]: value }
+      return { ...p, colleagueJudges: list }
+    })
+  }
+  const handleColleagueStamp = async (i: number) => {
+    const path = await window.api.selectFile([{ name: 'Изображения', extensions: ['png','jpg','jpeg','gif','webp'] }])
+    if (!path) return
+    const base64 = await window.api.readBinary(path)
+    if (base64) updateColleague(i, 'stampBase64', base64)
+  }
+
+  // Real-time custom theme preview (no Save needed for live color changes)
+  useEffect(() => {
+    if ((form.theme ?? 'dark') !== 'custom') return
+    applyCustomThemeCss(
+      form.customBgR ?? 20, form.customBgG ?? 20, form.customBgB ?? 30,
+      form.customAccR ?? 200, form.customAccG ?? 150, form.customAccB ?? 50
+    )
+  }, [form.theme, form.customBgR, form.customBgG, form.customBgB, form.customAccR, form.customAccG, form.customAccB])
 
   const SectionCard = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
     <div style={{
@@ -209,6 +247,7 @@ export default function Settings() {
                     { id: 'light',  label: '☀️ Светлая' },
                     { id: 'gta5rp', label: '🏛 GTA5RP' },
                     { id: 'cursed', label: '🩸 Cursed' },
+                    { id: 'custom', label: '🎨 Своя' },
                   ] as const).map(t => {
                     const active = (form.theme ?? 'dark') === t.id
                     return (
@@ -231,9 +270,69 @@ export default function Settings() {
                     )
                   })}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 7 }}>
-                  Изменение применяется сразу после нажатия «Сохранить изменения»
-                </div>
+                {(form.theme ?? 'dark') === 'custom' && (
+                  <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                    {/* Background color picker */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                          background: `rgb(${form.customBgR??20},${form.customBgG??20},${form.customBgB??30})`,
+                          border: '1px solid var(--line-2)', boxShadow: 'var(--sh1)',
+                        }} />
+                        <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)' }}>Фон</div>
+                      </div>
+                      {([
+                        { key: 'customBgR' as const, label: 'R', color: '#f06c6c', def: 20 },
+                        { key: 'customBgG' as const, label: 'G', color: '#3ecf8e', def: 20 },
+                        { key: 'customBgB' as const, label: 'B', color: '#5b9cf6', def: 30 },
+                      ]).map(({ key, label, color, def }) => (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color, width: 12, flexShrink: 0 }}>{label}</span>
+                          <input
+                            type="range" min={0} max={255} step={1}
+                            value={form[key] ?? def}
+                            onChange={e => setForm(p => ({ ...p, [key]: Number(e.target.value) }))}
+                            style={{ flex: 1, accentColor: color }}
+                          />
+                          <span style={{ fontSize: 11, color: 'var(--t3)', width: 28, textAlign: 'right', fontFamily: 'var(--fm)' }}>{form[key] ?? def}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Accent color picker */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                          background: `rgb(${form.customAccR??200},${form.customAccG??150},${form.customAccB??50})`,
+                          border: '1px solid var(--line-2)', boxShadow: 'var(--sh1)',
+                        }} />
+                        <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)' }}>Акцент</div>
+                      </div>
+                      {([
+                        { key: 'customAccR' as const, label: 'R', color: '#f06c6c', def: 200 },
+                        { key: 'customAccG' as const, label: 'G', color: '#3ecf8e', def: 150 },
+                        { key: 'customAccB' as const, label: 'B', color: '#5b9cf6', def: 50 },
+                      ]).map(({ key, label, color, def }) => (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color, width: 12, flexShrink: 0 }}>{label}</span>
+                          <input
+                            type="range" min={0} max={255} step={1}
+                            value={form[key] ?? def}
+                            onChange={e => setForm(p => ({ ...p, [key]: Number(e.target.value) }))}
+                            style={{ flex: 1, accentColor: color }}
+                          />
+                          <span style={{ fontSize: 11, color: 'var(--t3)', width: 28, textAlign: 'right', fontFamily: 'var(--fm)' }}>{form[key] ?? def}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(form.theme ?? 'dark') !== 'custom' && (
+                  <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 7 }}>
+                    Изменение применяется сразу после нажатия «Сохранить изменения»
+                  </div>
+                )}
               </Field>
             </SectionCard>
           </>
@@ -274,6 +373,75 @@ export default function Settings() {
             </SectionCard>
           </>
         )
+
+      case 'collegial': {
+        const colleagues = form.colleagueJudges || []
+        return (
+          <>
+            <SectionCard>
+              <SectionTitle>Коллегиальный состав</SectionTitle>
+              <div style={{ fontSize: 12, color: 'var(--t2)', marginBottom: 14, lineHeight: 1.6 }}>
+                Судьи коллегии автоматически отображаются в блоке подписей всех документов. У каждого можно загрузить свою печать.
+              </div>
+
+              {/* Main judge preview */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--ac-bg)', borderRadius: 'var(--r3)', border: '1px solid var(--ac-border)', marginBottom: 14 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--ac2)" strokeWidth="1.7" strokeLinecap="round"><circle cx="7" cy="4" r="2.5"/><path d="M1.5 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--t1)' }}>
+                    {[settings.judgeFirstName, settings.judgeLastName].filter(Boolean).join(' ') || 'Судья'} — основной
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)' }}>{settings.position || 'Должность не указана'}</div>
+                </div>
+              </div>
+
+              {colleagues.map((j, i) => (
+                <div key={j.id} style={{ background: 'var(--bg-2)', border: '1px solid var(--line-1)', borderRadius: 'var(--r3)', padding: '14px 16px', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--t1)' }}>Судья {i + 1}</div>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => removeColleague(i)}
+                      style={{ color: 'var(--red)', padding: '3px 8px' }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M1 1l8 8M9 1l-8 8"/></svg>
+                      Удалить
+                    </button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                    <Field label="Имя">
+                      <input className="input" value={j.firstName} onChange={e => updateColleague(i, 'firstName', e.target.value)} placeholder="Имя" />
+                    </Field>
+                    <Field label="Фамилия">
+                      <input className="input" value={j.lastName} onChange={e => updateColleague(i, 'lastName', e.target.value)} placeholder="Фамилия" />
+                    </Field>
+                  </div>
+                  <Field label="Должность">
+                    <input className="input" value={j.position} onChange={e => updateColleague(i, 'position', e.target.value)} placeholder="Окружной судья" />
+                  </Field>
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--t2)', marginBottom: 8 }}>Печать</div>
+                    <UploadBox
+                      value={j.stampBase64}
+                      onUpload={() => handleColleagueStamp(i)}
+                      onRemove={() => updateColleague(i, 'stampBase64', undefined)}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <button
+                className="btn btn-secondary"
+                onClick={addColleague}
+                style={{ width: '100%', marginTop: 4, justifyContent: 'center' }}
+              >
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5.5 1v9M1 5.5h9"/></svg>
+                Добавить судью
+              </button>
+            </SectionCard>
+          </>
+        )
+      }
 
       case 'heraldry':
         return (

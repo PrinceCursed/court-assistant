@@ -1359,3 +1359,9 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
 .seg-btn:hover { color: var(--t1); }
 .seg-btn.active { background: var(--ac-bg); color: var(--ac2); }
 .seg-btn.active-red { background: var(--red-bg); color: var(--red); }
+
+/* ═══════════════════════════════════════════════════════
+   CUSTOM THEME — all vars injected by JS (utils/theme.ts)
+   This block just marks the attribute as intentional.
+═══════════════════════════════════════════════════════ */
+[data-theme="custom"] { /* vars set via document.documentElement.style */ }

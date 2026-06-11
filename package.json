@@ -1,6 +1,6 @@
 {
   "name": "court-assistant",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Court Assistant — professional desktop application for district judges",
   "main": "out/main/index.js",
   "author": "Prince Cursed",

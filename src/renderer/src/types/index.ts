@@ -213,6 +213,14 @@ export interface Case {
   deadline?: string   // ISO date "YYYY-MM-DD"
 }
 
+export interface ColleagueJudge {
+  id: string
+  firstName: string
+  lastName: string
+  position: string
+  stampBase64?: string
+}
+
 export interface Settings {
   judgeFirstName: string
   judgeLastName: string
@@ -221,13 +229,20 @@ export interface Settings {
   storagePath: string
   heraldryDeterminationBase64?: string
   heraldryOrderBase64?: string
-  heraldrySize?: number       // px, default 80
-  heraldryOffsetX?: number    // px from left edge, default 60
-  heraldryOffsetY?: number    // px from top edge, default 60
-  stampOffsetX?: number       // px from right edge, default 60
-  stampOffsetY?: number       // px from bottom edge, default 60
-  stampScale?: number         // px width/height, default 120
-  theme?: 'dark' | 'light' | 'gta5rp' | 'cursed'
+  heraldrySize?: number
+  heraldryOffsetX?: number
+  heraldryOffsetY?: number
+  stampOffsetX?: number
+  stampOffsetY?: number
+  stampScale?: number
+  theme?: 'dark' | 'light' | 'gta5rp' | 'cursed' | 'custom'
+  colleagueJudges?: ColleagueJudge[]
+  customBgR?: number
+  customBgG?: number
+  customBgB?: number
+  customAccR?: number
+  customAccG?: number
+  customAccB?: number
 }
 
 export type View =
