@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useApp } from './store/AppContext'
 import Layout from './components/Layout/Layout'
+import Dashboard from './pages/Dashboard/Dashboard'
 import ActiveCases from './pages/ActiveCases/ActiveCases'
 import ClosedCases from './pages/ClosedCases/ClosedCases'
 import Templates from './pages/Templates/Templates'
@@ -50,6 +51,7 @@ export default function App() {
 
   const renderMain = () => {
     switch (view.type) {
+      case 'dashboard':            return <Dashboard />
       case 'active-cases':         return <ActiveCases />
       case 'closed-cases':         return <ClosedCases />
       case 'templates':            return <Templates />

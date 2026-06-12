@@ -249,6 +249,7 @@ export interface Settings {
 }
 
 export type View =
+  | { type: 'dashboard' }
   | { type: 'active-cases' }
   | { type: 'closed-cases' }
   | { type: 'templates' }

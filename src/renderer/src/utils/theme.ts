@@ -66,7 +66,9 @@ export function applyCustomThemeCss(
   // Text sitting ON accent-coloured elements (primary buttons etc.)
   s.setProperty('--ac-fg', lightAcc ? '#16130f' : '#ffffff')
   s.setProperty('--ac-bg',      rgba(accR, accG, accB, 0.12))
+  s.setProperty('--ac-dim',     rgba(accR, accG, accB, 0.07))
   s.setProperty('--ac-border',  rgba(accR, accG, accB, 0.35))
+  s.setProperty('--ac-border-h',rgba(accR, accG, accB, 0.55))
   s.setProperty('--ac-glow',    rgba(accR, accG, accB, 0.20))
   s.setProperty('--accent',         'var(--ac)')
   s.setProperty('--accent-hover',   'var(--ac2)')
@@ -100,7 +102,7 @@ const CUSTOM_PROPS = [
   '--line-0','--line-1','--line-2','--line-3','--line-4',
   '--border-0','--border-1','--border-2','--border-3',
   '--t1','--t2','--t3','--t4','--text-1','--text-2','--text-3','--text-inv',
-  '--ac','--ac2','--ac-bg','--ac-border','--ac-glow','--ac-fg',
+  '--ac','--ac2','--ac-bg','--ac-dim','--ac-border','--ac-border-h','--ac-glow','--ac-fg',
   '--accent','--accent-hover','--accent-dim','--accent-glow','--border-accent','--text-accent',
   '--sh1','--sh2','--sh3','--sh4','--sh-ac','--sh-xs','--sh-sm','--sh-md','--sh-lg','--sh-acc',
 ]

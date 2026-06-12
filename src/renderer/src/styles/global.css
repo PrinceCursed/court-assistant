@@ -43,11 +43,14 @@
   --text-inv:    var(--bg-0);
 
   /* ── Accent: Orange ──────────────────────────────────── */
-  --ac:        #dfa03f;
-  --ac2:       #eeb968;
-  --ac-bg:     rgba(223,160,63,0.12);
-  --ac-border: rgba(223,160,63,0.35);
-  --ac-glow:   rgba(223,160,63,0.20);
+  --ac:          #dfa03f;
+  --ac2:         #eeb968;
+  --ac-fg:       #16130f;
+  --ac-bg:       rgba(223,160,63,0.13);
+  --ac-dim:      rgba(223,160,63,0.07);
+  --ac-border:   rgba(223,160,63,0.32);
+  --ac-border-h: rgba(223,160,63,0.52);
+  --ac-glow:     rgba(223,160,63,0.35);
 
   /* Legacy aliases */
   --accent:        var(--ac);
@@ -58,16 +61,20 @@
   --text-accent:   var(--ac2);
 
   /* ── Semantic colors ─────────────────────────────────── */
-  --green:      #3ecf8e; --green-bg:  rgba(62,207,142,0.09);
-  --red:        #f06c6c; --red-bg:    rgba(240,108,108,0.09);
-  --amber:      #f5a623; --amber-bg:  rgba(245,166,35,0.09);
-  --yellow:     #f5a623; --yellow-dim:rgba(245,166,35,0.09);
-  --blue:       #5b9cf6; --blue-bg:   rgba(91,156,246,0.09);
-  --purple:     #c084fc; --purple-bg: rgba(192,132,252,0.09);
+  --green:        #3ecf8e; --green-bg:     rgba(62,207,142,0.10);  --green-border: rgba(62,207,142,0.30);
+  --red:          #f06c6c; --red-bg:       rgba(240,108,108,0.09); --red-border:   rgba(240,108,108,0.32);
+  --amber:        #f5a623; --amber-bg:     rgba(245,166,35,0.10);  --amber-border: rgba(245,166,35,0.30);
+  --yellow:       #f5a623; --yellow-dim:   rgba(245,166,35,0.09);
+  --blue:         #5b9cf6; --blue-bg:      rgba(91,156,246,0.10);  --blue-border:  rgba(91,156,246,0.30);
+  --purple:       #c084fc; --purple-bg:    rgba(192,132,252,0.10); --purple-border:rgba(192,132,252,0.30);
 
   /* Legacy aliases */
   --green-dim:  var(--green-bg);
   --red-dim:    var(--red-bg);
+
+  /* ── Surface shortcuts ──────────────────────────────── */
+  --sb: #131110;
+  --tb: rgba(15,14,12,0.92);
 
   /* ── Radii ───────────────────────────────────────────── */
   --r1: 5px; --r2: 8px; --r3: 11px; --r4: 14px; --r5: 18px; --rf: 9999px;
@@ -198,7 +205,7 @@ html, body, #root {
 ═══════════════════════════════════════════════════════ */
 .sidebar {
   width: var(--sb-w); flex-shrink: 0;
-  background: var(--bg-1);
+  background: var(--sb, var(--bg-1));
   border-right: 1px solid var(--line-1);
   display: flex; flex-direction: column; overflow: hidden;
   position: relative;
@@ -251,6 +258,7 @@ html, body, #root {
 .sidebar-footer {
   margin-top: auto; padding: 10px;
   border-top: 1px solid var(--line-0);
+  display: flex; align-items: center; gap: 6px;
 }
 .sidebar-footer-avatar {
   width: 28px; height: 28px; border-radius: 7px;
@@ -1043,7 +1051,7 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
 }
 
 [data-theme="light"] .sidebar {
-  background: var(--bg-1);
+  background: var(--sb, var(--bg-1));
   border-right-color: var(--line-1);
 }
 
@@ -1099,12 +1107,22 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
 
 /* Light theme: gold accent darkened for contrast on bright surfaces */
 [data-theme="light"] {
-  --ac:        #a8731c;
-  --ac2:       #8a5d10;
-  --ac-bg:     rgba(168,115,28,0.10);
-  --ac-border: rgba(168,115,28,0.45);
-  --ac-glow:   rgba(168,115,28,0.18);
-  --sh-ac: 0 4px 16px rgba(168,115,28,0.25);
+  --ac:          #a8731c;
+  --ac2:         #8a5d10;
+  --ac-fg:       #ffffff;
+  --ac-bg:       rgba(168,115,28,0.12);
+  --ac-dim:      rgba(168,115,28,0.07);
+  --ac-border:   rgba(168,115,28,0.40);
+  --ac-border-h: rgba(168,115,28,0.62);
+  --ac-glow:     rgba(168,115,28,0.32);
+  --sh-ac:       0 4px 16px rgba(168,115,28,0.25);
+  --sb: #ffffff;
+  --tb: rgba(242,242,245,0.92);
+  --green:        #178a55; --green-bg:     rgba(23,138,85,0.10);   --green-border: rgba(23,138,85,0.35);
+  --red:          #d23b47; --red-bg:       rgba(210,59,71,0.09);   --red-border:   rgba(210,59,71,0.35);
+  --amber:        #b97a10; --amber-bg:     rgba(185,122,16,0.10);  --amber-border: rgba(185,122,16,0.35);
+  --blue:         #2563eb; --blue-bg:      rgba(37,99,235,0.09);   --blue-border:  rgba(37,99,235,0.30);
+  --purple:       #7c3aed; --purple-bg:    rgba(124,58,237,0.09);  --purple-border:rgba(124,58,237,0.30);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1118,6 +1136,8 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
   --bg-2:   #16181c;
   --bg-3:   #1d2025;
   --bg-4:   #252830;
+  --sb: #0d0e11;
+  --tb: rgba(10,11,13,0.92);
 
   --line-0: rgba(255,255,255,0.04);
   --line-1: rgba(255,255,255,0.07);
@@ -1128,15 +1148,19 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
   --t1: #f2f4f8;
   --t2: #b6bcc8;
   --t3: #767e8c;
-  --t4: #3e434e;
+  --t4: #454b57;
 
-  --ac:        #5b9cf6;
-  --ac2:       #82b4f9;
-  --ac-bg:     rgba(91,156,246,0.12);
-  --ac-border: rgba(91,156,246,0.35);
-  --ac-glow:   rgba(91,156,246,0.20);
+  --ac:          #5b9cf6;
+  --ac2:         #82b4f9;
+  --ac-fg:       #ffffff;
+  --ac-bg:       rgba(91,156,246,0.14);
+  --ac-dim:      rgba(91,156,246,0.07);
+  --ac-border:   rgba(91,156,246,0.34);
+  --ac-border-h: rgba(91,156,246,0.55);
+  --ac-glow:     rgba(91,156,246,0.40);
 
-  --sh-ac: 0 4px 20px rgba(91,156,246,0.30);
+  --sh-ac: 0 4px 20px rgba(91,156,246,0.25);
+  --sh-lg: 0 12px 40px rgba(0,0,0,0.55);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1172,11 +1196,14 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
   --t4: #383335;
 
   /* blood red accent */
-  --ac:        #e11d2e;
-  --ac2:       #ff4757;
-  --ac-bg:     rgba(225,29,46,0.13);
-  --ac-border: rgba(225,29,46,0.45);
-  --ac-glow:   rgba(225,29,46,0.28);
+  --ac:          #e11d2e;
+  --ac2:         #ff4757;
+  --ac-fg:       #ffffff;
+  --ac-bg:       rgba(225,29,46,0.14);
+  --ac-dim:      rgba(225,29,46,0.07);
+  --ac-border:   rgba(225,29,46,0.45);
+  --ac-border-h: rgba(225,29,46,0.65);
+  --ac-glow:     rgba(225,29,46,0.45);
 
   /* deeper shadows + red glow */
   --sh1: 0 1px 2px rgba(0,0,0,0.6);
@@ -1186,8 +1213,11 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
   --sh-ac: 0 4px 24px rgba(225,29,46,0.45);
 
   /* semantic red shifts toward accent */
-  --red:    #ff4757;
-  --red-bg: rgba(255,71,87,0.10);
+  --red:        #ff4757;
+  --red-bg:     rgba(255,71,87,0.10);
+  --red-border: rgba(255,71,87,0.35);
+  --sb: #050505;
+  --tb: rgba(5,5,5,0.92);
 }
 
 [data-theme="cursed"] html,

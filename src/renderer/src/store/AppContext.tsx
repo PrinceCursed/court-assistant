@@ -37,7 +37,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cases, setCases] = useState<Case[]>([])
   const [settings, setSettings] = useState<Settings>(defaultSettings())
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<View>({ type: 'active-cases' })
+  const [view, setView] = useState<View>({ type: 'dashboard' })
   const caseNumberRef = useRef(1)
 
   useEffect(() => {
