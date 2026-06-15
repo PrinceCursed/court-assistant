@@ -1,6 +1,7 @@
 import React from 'react'
 import Sidebar from '../Sidebar/Sidebar'
 import RightPanel from '../RightPanel/RightPanel'
+import CursedDecor from '../CursedDecor/CursedDecor'
 import { useApp } from '../../store/AppContext'
 import { applyCustomThemeCss, clearCustomThemeCss } from '../../utils/theme'
 import lilyLogo from '../../assets/lily_logo.png'
@@ -8,7 +9,7 @@ import lilyLogo from '../../assets/lily_logo.png'
 interface Props { children: React.ReactNode }
 
 export default function Layout({ children }: Props) {
-  const { view } = useApp()
+  const { view, settings } = useApp()
   const isEditor = view.type === 'document-editor'
 
   return (
@@ -16,7 +17,10 @@ export default function Layout({ children }: Props) {
       <Titlebar />
       <div className="app-body">
         <Sidebar />
-        <div className="main-area">{children}</div>
+        <div className="main-area">
+          {settings.theme === 'cursed' && <CursedDecor />}
+          {children}
+        </div>
         {!isEditor && <RightPanel />}
       </div>
     </div>

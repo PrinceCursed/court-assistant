@@ -1316,6 +1316,11 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
 [data-theme="cursed"] .main-area {
   position: relative;
 }
+/* Keep page content above the chains/1000-7 decor layer */
+[data-theme="cursed"] .main-area > *:not(.cursed-decor-layer) {
+  position: relative;
+  z-index: 1;
+}
 [data-theme="cursed"] .main-area::after {
   content: '';
   position: absolute;
@@ -1336,6 +1341,12 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
 ═══════════════════════════════════════════════════════ */
 @keyframes fadeIn    { from { opacity: 0; }              to { opacity: 1; } }
 @keyframes slideUp   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+/* iMessage prank + achievement toast */
+@keyframes bannerDrop  { from { opacity: 0; transform: translateY(-130%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes msgPop      { from { opacity: 0; transform: translateY(8px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes typingBlink { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
+@keyframes firedFlash  { 0% { opacity: 0; } 20% { opacity: 1; background: rgba(225,29,46,0.55); } 100% { opacity: 1; } }
+@keyframes achToastIn  { from { opacity: 0; transform: translate(-50%, 26px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes spin      { to { transform: rotate(360deg); } }
 @keyframes pulse     { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }

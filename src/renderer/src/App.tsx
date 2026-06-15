@@ -12,6 +12,8 @@ import CaseWorkspace from './pages/CaseWorkspace/CaseWorkspace'
 import DocumentEditor from './pages/CaseWorkspace/tabs/DocumentEditor'
 import UpdateBanner from './modules/updater/UpdateBanner'
 import GlobalSearch from './components/GlobalSearch/GlobalSearch'
+import CursedMessages from './components/CursedMessages/CursedMessages'
+import AchievementToast from './components/AchievementToast/AchievementToast'
 
 export default function App() {
   const { view, setView, updateCase, cases } = useApp()
@@ -97,6 +99,8 @@ export default function App() {
       <Layout>{renderMain()}</Layout>
       <UpdateBanner />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <CursedMessages />
+      <AchievementToast />
     </>
   )
 }

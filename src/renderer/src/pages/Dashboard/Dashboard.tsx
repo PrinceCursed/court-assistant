@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../../store/AppContext'
 import { Case } from '../../types'
+import { QUOTES } from '../../data/quotes'
+import { evaluateAchievements } from '../../data/achievements'
 
 type DashTab = 'overview' | 'focus' | 'desktop'
 
@@ -75,6 +77,15 @@ export default function Dashboard() {
   const pinnedCases = useMemo(() => activeCases.filter(c => c.isPinned).slice(0, 3), [activeCases])
   const urgentCase = useMemo(() => activeCases.find(c => c.priority === 'urgent'), [activeCases])
 
+  // New random quote each time the dashboard mounts (= each open)
+  const quote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], [])
+  const achievements = useMemo(() => evaluateAchievements(cases), [cases])
+  const unlockedCount = achievements.filter(a => a.unlocked).length
+  const sortedAch = useMemo(
+    () => [...achievements].sort((a, b) => (Number(b.unlocked) - Number(a.unlocked)) || (b.progress - a.progress)),
+    [achievements],
+  )
+
   const card: React.CSSProperties = {
     background: 'var(--bg-1)', border: '1px solid var(--line-2)',
     borderRadius: 13, padding: '16px 18px',
@@ -112,6 +123,22 @@ export default function Dashboard() {
           {tabBtn('overview', 'Обзор')}
           {tabBtn('focus', 'Фокус дня')}
           {tabBtn('desktop', 'Рабочий стол')}
+        </div>
+      </div>
+
+      {/* ── Цитата дня ── */}
+      <div style={{
+        marginTop: 18, display: 'flex', alignItems: 'flex-start', gap: 16,
+        background: 'linear-gradient(135deg, var(--ac-bg), transparent 70%), var(--bg-1)',
+        border: '1px solid var(--ac-border)', borderRadius: 14, padding: '16px 20px',
+        animation: 'fadeIn 0.45s ease both',
+      }}>
+        <div style={{ fontFamily: 'Georgia, serif', fontSize: 46, lineHeight: 0.8, color: 'var(--ac2)', flexShrink: 0, marginTop: 4 }}>“</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--t1)', lineHeight: 1.5, fontStyle: 'italic' }}>
+            {quote.text}
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--ac2)', marginTop: 7, fontWeight: 600 }}>— {quote.author}</div>
         </div>
       </div>
 
@@ -259,6 +286,54 @@ export default function Dashboard() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                 Создать документ по шаблону
               </button>
+            </div>
+          </div>
+
+          {/* ── Достижения ── */}
+          <div style={{ ...card, padding: '18px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
+              <span style={{ fontSize: 16 }}>🏆</span>
+              <h2 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em' }}>Достижения</h2>
+              <span style={{ fontFamily: 'var(--fm)', fontSize: 10.5, fontWeight: 700, color: 'var(--ac2)', background: 'var(--ac-bg)', border: '1px solid var(--ac-border)', borderRadius: 9999, padding: '1px 9px' }}>
+                {unlockedCount} / {achievements.length}
+              </span>
+              <div style={{ flex: 1, height: 4, background: 'var(--bg-3)', borderRadius: 9999, marginLeft: 6, maxWidth: 160 }}>
+                <div style={{ width: `${Math.round(unlockedCount / achievements.length * 100)}%`, height: '100%', borderRadius: 9999, background: 'linear-gradient(90deg, var(--ac), var(--ac2))' }} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(232px, 1fr))', gap: 10 }}>
+              {sortedAch.map(a => (
+                <div key={a.id} style={{
+                  display: 'flex', flexDirection: 'column', gap: 9, padding: '13px 14px', borderRadius: 12,
+                  background: a.unlocked ? 'var(--bg-2)' : 'var(--bg-0)',
+                  border: `1px solid ${a.unlocked ? a.color : 'var(--line-1)'}`,
+                  opacity: a.unlocked ? 1 : 0.72, transition: 'opacity 0.15s',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: 10, flexShrink: 0, fontSize: 19,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'var(--bg-3)', border: `1px solid ${a.unlocked ? a.color : 'var(--line-2)'}`,
+                      filter: a.unlocked ? 'none' : 'grayscale(1)',
+                    }}>{a.unlocked ? a.icon : '🔒'}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--t1)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                        {a.title}
+                        {a.unlocked && <span style={{ color: a.color, fontSize: 11 }}>✓</span>}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2, lineHeight: 1.35 }}>{a.description}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, height: 5, background: 'var(--bg-3)', borderRadius: 9999, overflow: 'hidden' }}>
+                      <div style={{ width: `${Math.round(a.progress * 100)}%`, height: '100%', borderRadius: 9999, background: a.unlocked ? a.color : 'var(--ac)' }} />
+                    </div>
+                    <span style={{ fontFamily: 'var(--fm)', fontSize: 9.5, fontWeight: 600, color: 'var(--t3)', flexShrink: 0 }}>
+                      {Math.min(a.current, a.goal)}/{a.goal}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
