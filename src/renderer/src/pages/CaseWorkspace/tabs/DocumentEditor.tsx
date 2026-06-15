@@ -19,6 +19,12 @@ type Align = 'Left' | 'Center' | 'Right'
 
 interface SlashCmd { key: string; label: string; html: string }
 
+/** Clickable smart-field placeholder — same markup as templates' ph() helper,
+ *  so slash-inserted fields open the SmartFieldPopup just like template ones. */
+function phm(key: string, type: SmartFieldType = 'text'): string {
+  return `<mark class="doc-placeholder" data-ph-type="${type}" data-ph-key="${key}">[${key}]</mark>`
+}
+
 const SLASH_COMMANDS: SlashCmd[] = [
   { key: 'установил',  label: '§ УСТАНОВИЛ',  html: '<div class="doc-section">УСТАНОВИЛ:</div><p><br></p>' },
   { key: 'определил',  label: '§ ОПРЕДЕЛИЛ',  html: '<div class="doc-section">ОПРЕДЕЛИЛ:</div><p><br></p>' },
@@ -28,15 +34,15 @@ const SLASH_COMMANDS: SlashCmd[] = [
   { key: 'принять',    label: '✅ Принять иск',
     html: '<div class="doc-section">ОПРЕДЕЛИЛ:</div><p>Принять исковое заявление к производству.</p><p>Обязать прокуратуру в течение 48 часов провести проверку по обстоятельствам дела.</p><p><br></p>' },
   { key: 'оставить',   label: '⏸ Оставить без движения',
-    html: '<div class="doc-section">ОПРЕДЕЛИЛ:</div><p>Оставить исковое заявление без движения до <strong>[УСЛОВИЕ]</strong>.</p><p>Предложить заявителю в течение <strong>[СРОК]</strong> устранить нарушения: <strong>[ТРЕБУЕМЫЕ ДЕЙСТВИЯ]</strong>.</p><p><br></p>' },
+    html: `<div class="doc-section">ОПРЕДЕЛИЛ:</div><p>Оставить исковое заявление без движения до ${phm('УСЛОВИЕ')}.</p><p>Предложить заявителю в течение ${phm('СРОК')} устранить нарушения: ${phm('ТРЕБУЕМЫЕ ДЕЙСТВИЯ')}.</p><p><br></p>` },
   { key: 'возврат',    label: '↩ Возвратить иск',
     html: '<div class="doc-section">ОПРЕДЕЛИЛ:</div><p>Возвратить исковое заявление заявителю.</p><p>Разъяснить, что после устранения нарушений заявитель вправе обратиться в суд повторно.</p><p><br></p>' },
   { key: 'отказать',   label: '🚫 Отказать в принятии',
     html: '<div class="doc-section">ОПРЕДЕЛИЛ:</div><p>Отказать в принятии искового заявления.</p><p>Настоящее определение вступает в силу со дня принятия и не подлежит обжалованию.</p><p><br></p>' },
   { key: 'назначить',  label: '📅 Назначить заседание',
-    html: '<div class="doc-section">ОПРЕДЕЛИЛ:</div><p>Назначить судебное заседание на <strong>[ДАТА ЗАСЕДАНИЯ]</strong> в <strong>[ВРЕМЯ]</strong> в зале суда Капитолия.</p><p>Признать явку сторон обязательной.</p><p><br></p>' },
+    html: `<div class="doc-section">ОПРЕДЕЛИЛ:</div><p>Назначить судебное заседание на ${phm('ДАТА ЗАСЕДАНИЯ', 'date')} в ${phm('ВРЕМЯ', 'time')} в зале суда Капитолия.</p><p>Признать явку сторон обязательной.</p><p><br></p>` },
   { key: 'решение',    label: '⚖ Вставить решение',
-    html: '<div class="doc-section">РЕШИЛ:</div><ol><li><strong>[ПУНКТ 1]</strong></li><li><strong>[ПУНКТ 2]</strong></li><li><strong>[ПУНКТ 3]</strong></li></ol><p>Решение вступает в законную силу с момента публикации.</p><p><br></p>' },
+    html: `<div class="doc-section">РЕШИЛ:</div><ol><li>${phm('ПУНКТ 1')}</li><li>${phm('ПУНКТ 2')}</li><li>${phm('ПУНКТ 3')}</li></ol><p>Решение вступает в законную силу с момента публикации.</p><p><br></p>` },
 ]
 
 interface Bookmark { id: string; label: string }

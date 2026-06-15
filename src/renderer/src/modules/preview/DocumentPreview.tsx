@@ -324,10 +324,9 @@ export default function DocumentPreview({ content, case_: c, settings, docTitle,
 
   useEffect(() => {
     const logoReserved = heraldrySize + 28
-    // Extra height when colleagues wrap to a second row (>2 judges side by side)
-    const sigReserved = allJudges.length <= 2
-      ? SIGNATURE_RESERVED
-      : SIGNATURE_RESERVED + Math.ceil((allJudges.length - 2) / 2) * 90
+    // Judges stack vertically (one signature row each), so reserve ~100px extra
+    // per additional collegium judge beyond the first.
+    const sigReserved = SIGNATURE_RESERVED + Math.max(0, allJudges.length - 1) * 100
     const timer = setTimeout(() => {
       setPages(paginateHtml(stripTokensForPreview(content), logoReserved, sigReserved))
     }, 350)
@@ -428,19 +427,30 @@ export default function DocumentPreview({ content, case_: c, settings, docTitle,
               <div className="a4-page-content" dangerouslySetInnerHTML={{ __html: pageHtml }} />
 
               {/* ── Signature + Stamp — last page only ──────────────────────── */}
+              {/* Each judge gets a full-width row: signature block on the LEFT,
+                  round stamp anchored to the bottom-right of the page. Multiple
+                  collegium judges stack vertically (row per judge), so signatures
+                  never sit side by side. The stamp offsets (offsetX from the right
+                  edge, offsetY from the bottom edge) move the stamp relative to the
+                  page margins, exactly as the Settings sliders describe. */}
               {isLast && (
                 <div className="a4-page-stamp" style={{
                   bottom: 40,
                   left: 50,
                   right: 50,
                   display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: allJudges.length === 1 ? 'space-between' : 'flex-start',
-                  gap: 40,
-                  flexWrap: 'wrap',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  gap: 18,
                 }}>
                   {allJudges.map((j, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+                    <div key={i} style={{
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                    }}>
+                      {/* Signature block — left */}
                       <div>
                         <div style={{ fontSize: 12, color: '#000', fontFamily: "'Times New Roman', Georgia, serif", marginBottom: 5 }}>
                           {j.position}
@@ -452,6 +462,7 @@ export default function DocumentPreview({ content, case_: c, settings, docTitle,
                           {j.name}
                         </div>
                       </div>
+                      {/* Round stamp — bottom-right, offset from the page edges */}
                       {j.stamp && (
                         <img
                           src={j.stamp}
@@ -461,9 +472,8 @@ export default function DocumentPreview({ content, case_: c, settings, docTitle,
                             height: j.scale,
                             objectFit: 'contain',
                             flexShrink: 0,
-                            marginLeft: 8,
-                            marginBottom: i === 0 ? j.offsetY : 0,
-                            marginRight: i === 0 ? j.offsetX : 0,
+                            marginRight: j.offsetX,
+                            marginBottom: j.offsetY,
                           }}
                         />
                       )}

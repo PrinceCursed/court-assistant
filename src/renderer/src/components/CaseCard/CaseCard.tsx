@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
-  const { pinCase, deleteCase, closeCase, duplicateCase, setView } = useApp()
+  const { pinCase, deleteCase, closeCase, reopenCase, duplicateCase, setView } = useApp()
   const [menu, setMenu] = useState(false)
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 })
   const menuRef = useRef<HTMLDivElement>(null)
@@ -196,12 +196,19 @@ export default function CaseCard({ case_: c, onOpen, onEdit }: Props) {
         Дублировать
       </div>
       <div className="ctx-divider" />
-      {c.status === 'active' && (
+      {c.status === 'active' ? (
         <div className="ctx-item" onClick={() => { closeCase(c.id); setMenu(false) }}>
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
             <circle cx="6.5" cy="6.5" r="5.5"/><path d="M4 6.5l2 2 3.5-3.5"/>
           </svg>
           Закрыть дело
+        </div>
+      ) : (
+        <div className="ctx-item" onClick={() => { reopenCase(c.id); setMenu(false) }}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+            <path d="M2 6.5a4.5 4.5 0 1 1 1.3 3.2"/><path d="M2 10V7h3"/>
+          </svg>
+          Вернуть в работу
         </div>
       )}
       <div className="ctx-item danger" onClick={() => {

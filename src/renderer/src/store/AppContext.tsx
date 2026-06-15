@@ -19,6 +19,7 @@ interface Ctx {
   updateCase: (id: string, patch: Partial<Case>) => Promise<void>
   deleteCase: (id: string) => Promise<void>
   closeCase: (id: string) => Promise<void>
+  reopenCase: (id: string) => Promise<void>
   pinCase: (id: string) => Promise<void>
   duplicateCase: (id: string) => Promise<Case>
   updateSettings: (patch: Partial<Settings>) => Promise<void>
@@ -169,6 +170,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setView({ type: 'active-cases' })
   }, [persistCase])
 
+  const reopenCase = useCallback(async (id: string) => {
+    setCases(prev => prev.map(c => {
+      if (c.id !== id) return c
+      const updated: Case = {
+        ...c, status: 'active', updatedAt: new Date().toISOString(),
+        timeline: [...c.timeline, {
+          id: uuid(), date: formatDateForTimeline(new Date()),
+          event: 'Дело возвращено в работу', type: 'custom'
+        }]
+      }
+      persistCase(updated)
+      return updated
+    }))
+    setView({ type: 'active-cases' })
+  }, [persistCase])
+
   const pinCase = useCallback(async (id: string) => {
     setCases(prev => prev.map(c => {
       if (c.id !== id) return c
@@ -223,7 +240,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider value={{
       cases, settings, loading, view, setView, openCase,
-      createCase, updateCase, deleteCase, closeCase, pinCase, duplicateCase,
+      createCase, updateCase, deleteCase, closeCase, reopenCase, pinCase, duplicateCase,
       updateSettings, nextCaseNumber, addTimelineEvent
     }}>
       {children}
