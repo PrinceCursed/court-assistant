@@ -1,6 +1,6 @@
 {
   "name": "court-assistant",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Court Assistant — professional desktop application for district judges",
   "main": "out/main/index.js",
   "author": "Prince Cursed",
@@ -8,8 +8,10 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "build:win": "electron-vite build && electron-builder --win --x64",
-    "release": "electron-vite build && electron-builder --win --x64 --publish always",
+    "build:win": "electron-vite build && electron-builder --win",
+    "build:mac": "electron-vite build && electron-builder --mac",
+    "build:all": "electron-vite build && electron-builder --win --mac",
+    "release": "electron-vite build && electron-builder --publish always",
     "preview": "electron-vite preview"
   },
   "dependencies": {
@@ -59,6 +61,32 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Court Assistant"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "darkModeSupport": true,
+      "identity": null,
+      "gatekeeperAssess": false,
+      "hardenedRuntime": false
+    },
+    "dmg": {
+      "title": "Court Assistant ${version}"
     },
     "publish": {
       "provider": "github",

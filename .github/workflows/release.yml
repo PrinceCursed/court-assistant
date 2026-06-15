@@ -7,7 +7,11 @@ on:
 
 jobs:
   build-and-publish:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: write   # needed to create GitHub Release and upload assets
 
@@ -28,4 +32,6 @@ jobs:
         env:
           # GitHub token for electron-builder to upload assets to the Release
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Build the macOS app unsigned (no Apple Developer certificate)
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: npm run release
