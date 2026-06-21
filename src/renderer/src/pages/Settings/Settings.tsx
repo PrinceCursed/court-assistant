@@ -501,12 +501,12 @@ export default function Settings() {
               <SectionTitle>Что нового в v{appVersion}</SectionTitle>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
-                  ['Достижения: следите за прогрессом — от первого иска до легенды округа', 'var(--ac)'],
-                  ['Цитата дня на дашборде: 30 мотивационных и юридических цитат', 'var(--green)'],
+                  ['Редактор шаблонов: визуальный конструктор (слои, компоненты, параметры)', 'var(--ac)'],
+                  ['Импорт своих шаблонов из .docx — оформление считывается автоматически', 'var(--green)'],
+                  ['Единая библиотека: кастомные + общие шаблоны в одном месте', 'var(--blue)'],
+                  ['Кроссплатформенность: сборки для macOS и Windows', 'var(--amber)'],
+                  ['Достижения, цитата дня и пасхалка Prince Cursed', 'var(--purple)'],
                   ['Тема Cursed: цепи и метка 1000−7 на фоне', 'var(--red)'],
-                  ['Дашборд судьи: обзор, фокус дня и рабочий стол с данными из дел', 'var(--blue)'],
-                  ['Печать справа внизу; коллегия подписывает документы друг под другом', 'var(--amber)'],
-                  ['Ордер: единый документ (Arrest and search); закрытые дела можно вернуть в работу', 'var(--purple)'],
                 ].map(([text, color]) => (
                   <div key={text as string} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: color as string, marginTop: 5, flexShrink: 0 }} />

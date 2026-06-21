@@ -246,6 +246,43 @@ export interface Settings {
   customAccR?: number
   customAccG?: number
   customAccB?: number
+  /** First-launch onboarding completed (template choice shown) */
+  onboarded?: boolean
+}
+
+// ── Custom templates (visual constructor) ────────────────────────────────────
+export type TemplateBlockType = 'text' | 'block' | 'spacer' | 'line' | 'image'
+
+export interface TemplateBlock {
+  id: string
+  type: TemplateBlockType
+  /** text / block: inner HTML (may contain placeholder marks) */
+  content?: string
+  align?: 'left' | 'center' | 'right' | 'justify'
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  fontSize?: number          // px
+  color?: string
+  /** block (panel) */
+  bg?: string
+  bordered?: boolean
+  /** spacer */
+  height?: number            // px
+  /** line */
+  thickness?: number         // px
+  /** image */
+  src?: string               // base64 data URL
+  width?: number             // percent
+}
+
+export interface CustomTemplate {
+  id: string
+  name: string
+  blocks: TemplateBlock[]
+  createdAt: string
+  updatedAt: string
+  source?: 'blank' | 'docx'
 }
 
 export type View =
@@ -258,6 +295,7 @@ export type View =
   | { type: 'case-workspace'; caseId: string; tab?: WorkspaceTab }
   | { type: 'document-editor'; caseId: string; documentId: string }
   | { type: 'template-editor'; docType: DocumentType; from?: 'templates' | 'additional-templates' }
+  | { type: 'template-builder'; templateId: string }
 
 export type WorkspaceTab = 'documents' | 'materials' | 'participants' | 'notes' | 'timeline' | 'deadline'
 
@@ -277,6 +315,7 @@ declare global {
       mkdir: (p: string) => Promise<boolean>
       copyFile: (src: string, dest: string) => Promise<boolean>
       readBinary: (p: string) => Promise<string | null>
+      importDocx: (p: string) => Promise<{ ok: boolean; xml?: string; error?: string }>
       saveJpeg: (dir: string, filename: string, base64: string) => Promise<boolean>
       selectFolder: () => Promise<string | null>
       selectFile: (filters: { name: string; extensions: string[] }[]) => Promise<string | null>

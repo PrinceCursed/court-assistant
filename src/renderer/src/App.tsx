@@ -7,6 +7,7 @@ import ClosedCases from './pages/ClosedCases/ClosedCases'
 import Templates from './pages/Templates/Templates'
 import AdditionalTemplates from './pages/Templates/AdditionalTemplates'
 import TemplateEditor from './pages/Templates/TemplateEditor'
+import TemplateBuilder from './pages/Templates/TemplateBuilder'
 import Settings from './pages/Settings/Settings'
 import CaseWorkspace from './pages/CaseWorkspace/CaseWorkspace'
 import DocumentEditor from './pages/CaseWorkspace/tabs/DocumentEditor'
@@ -14,6 +15,7 @@ import UpdateBanner from './modules/updater/UpdateBanner'
 import GlobalSearch from './components/GlobalSearch/GlobalSearch'
 import CursedMessages from './components/CursedMessages/CursedMessages'
 import AchievementToast from './components/AchievementToast/AchievementToast'
+import Onboarding from './components/Onboarding/Onboarding'
 
 export default function App() {
   const { view, setView, updateCase, cases } = useApp()
@@ -61,6 +63,7 @@ export default function App() {
       case 'settings':             return <Settings />
       case 'case-workspace':       return <CaseWorkspace caseId={view.caseId} initialTab={view.tab} />
       case 'template-editor':      return <TemplateEditor docType={view.docType} from={view.from} onBack={() => setView({ type: view.from ?? 'templates' })} />
+      case 'template-builder':     return <TemplateBuilder templateId={view.templateId} onBack={() => setView({ type: 'templates' })} />
       case 'document-editor': {
         const c = cases.find(x => x.id === view.caseId)
         const doc = c?.documents.find(d => d.id === view.documentId)
@@ -101,6 +104,7 @@ export default function App() {
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <CursedMessages />
       <AchievementToast />
+      <Onboarding />
     </>
   )
 }

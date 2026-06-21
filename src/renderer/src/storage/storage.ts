@@ -1,4 +1,4 @@
-import { Case, Settings } from '../types'
+import { Case, Settings, CustomTemplate } from '../types'
 
 const DEFAULT_SETTINGS: Settings = {
   judgeFirstName: '',
@@ -103,4 +103,37 @@ export async function saveStamp(srcPath: string): Promise<string | null> {
 
 export function formatDateForTimeline(date: Date): string {
   return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+// ── Custom templates (visual constructor) ─────────────────────────────────────
+
+export async function loadCustomTemplates(): Promise<CustomTemplate[]> {
+  const base = await getStoragePath()
+  const dir = `${base}/custom-templates`
+  const files = await window.api.readDir(dir)
+  const out: CustomTemplate[] = []
+  for (const f of files) {
+    if (!f.endsWith('.json')) continue
+    const raw = await window.api.readFile(`${dir}/${f}`)
+    if (raw) { try { out.push(JSON.parse(raw)) } catch { /* skip corrupt */ } }
+  }
+  return out.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+}
+
+export async function loadCustomTemplate(id: string): Promise<CustomTemplate | null> {
+  const base = await getStoragePath()
+  const raw = await window.api.readFile(`${base}/custom-templates/${id}.json`)
+  if (!raw) return null
+  try { return JSON.parse(raw) } catch { return null }
+}
+
+export async function saveCustomTemplate(t: CustomTemplate): Promise<void> {
+  const base = await getStoragePath()
+  await window.api.mkdir(`${base}/custom-templates`)
+  await window.api.writeFile(`${base}/custom-templates/${t.id}.json`, JSON.stringify(t, null, 2))
+}
+
+export async function deleteCustomTemplate(id: string): Promise<void> {
+  const base = await getStoragePath()
+  await window.api.deleteFile(`${base}/custom-templates/${id}.json`)
 }

@@ -834,6 +834,10 @@ span.smart-field-filled:hover { background: rgba(62,207,142,0.22); }
   flex-direction: row; min-height: 0; padding: 9px 12px; gap: 6px;
 }
 
+/* Template library cards */
+.tpl-card { transition: border-color var(--dur), background var(--dur), transform var(--dur); }
+.tpl-card:hover { border-color: var(--ac-border-h, var(--ac-border)); background: var(--bg-3); transform: translateY(-2px); }
+
 /* ═══════════════════════════════════════════════════════
    NOTES
 ═══════════════════════════════════════════════════════ */

@@ -2,8 +2,52 @@ import { app, shell, BrowserWindow, ipcMain, dialog, protocol, net } from 'elect
 import { join } from 'path'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as zlib from 'zlib'
 import { pathToFileURL } from 'url'
 import { autoUpdater } from 'electron-updater'
+
+// ── DOCX reader (built-in ZIP parse, no dependencies) ─────────────────────────
+/**
+ * Extracts word/document.xml from a .docx (which is a ZIP container) using the
+ * central directory, so it works even when Word writes data descriptors.
+ * Returns the XML string, or null if the file can't be read.
+ */
+function extractDocxXml(filePath: string): string | null {
+  const buf = fs.readFileSync(filePath)
+  const EOCD_SIG = 0x06054b50
+  // Find End Of Central Directory (scan back, allowing for a ZIP comment ≤64KB)
+  let eocd = -1
+  const minPos = Math.max(0, buf.length - 22 - 65536)
+  for (let i = buf.length - 22; i >= minPos; i--) {
+    if (buf.readUInt32LE(i) === EOCD_SIG) { eocd = i; break }
+  }
+  if (eocd < 0) return null
+  const cdCount = buf.readUInt16LE(eocd + 10)
+  const cdOffset = buf.readUInt32LE(eocd + 16)
+
+  let p = cdOffset
+  for (let n = 0; n < cdCount; n++) {
+    if (p + 46 > buf.length || buf.readUInt32LE(p) !== 0x02014b50) break
+    const method = buf.readUInt16LE(p + 10)
+    const compSize = buf.readUInt32LE(p + 20)
+    const nameLen = buf.readUInt16LE(p + 28)
+    const extraLen = buf.readUInt16LE(p + 30)
+    const commentLen = buf.readUInt16LE(p + 32)
+    const localOffset = buf.readUInt32LE(p + 42)
+    const name = buf.toString('utf8', p + 46, p + 46 + nameLen)
+    if (name === 'word/document.xml') {
+      const lhNameLen = buf.readUInt16LE(localOffset + 26)
+      const lhExtraLen = buf.readUInt16LE(localOffset + 28)
+      const dataStart = localOffset + 30 + lhNameLen + lhExtraLen
+      const data = buf.subarray(dataStart, dataStart + compSize)
+      if (method === 0) return data.toString('utf8')          // stored
+      if (method === 8) return zlib.inflateRawSync(data).toString('utf8') // deflate
+      return null
+    }
+    p += 46 + nameLen + extraLen + commentLen
+  }
+  return null
+}
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -214,6 +258,16 @@ ipcMain.handle('fs:readBinary', async (_e, filePath: string) => {
       : 'image/png'
     return `data:${mime};base64,${buf.toString('base64')}`
   } catch { return null }
+})
+
+ipcMain.handle('template:importDocx', async (_e, filePath: string) => {
+  try {
+    const xml = extractDocxXml(filePath)
+    if (!xml) return { ok: false, error: 'Не удалось прочитать .docx — файл повреждён или это не Word-документ' }
+    return { ok: true, xml }
+  } catch (err) {
+    return { ok: false, error: String(err) }
+  }
 })
 
 ipcMain.handle('fs:saveJpeg', async (_e, dirPath: string, filename: string, base64: string) => {

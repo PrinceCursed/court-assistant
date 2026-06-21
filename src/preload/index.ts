@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('api', {
   mkdir: (p: string) => ipcRenderer.invoke('fs:mkdir', p),
   copyFile: (src: string, dest: string) => ipcRenderer.invoke('fs:copyFile', src, dest),
   readBinary: (p: string) => ipcRenderer.invoke('fs:readBinary', p),
+  importDocx: (p: string) => ipcRenderer.invoke('template:importDocx', p),
   saveJpeg: (dir: string, filename: string, base64: string) =>
     ipcRenderer.invoke('fs:saveJpeg', dir, filename, base64),
 
